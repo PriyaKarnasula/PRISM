@@ -55,9 +55,9 @@ class Groups(ctk.CTkFrame):
 
         self.apply_frame = ctk.CTkFrame(nav_frame)
         self.apply_frame.grid(row=3, column=0, padx=5, pady=5)
-        self.apply_btn = ctk.CTkButton(self.apply_frame, text="Apply", command=self.apply_criteria) #change command later
+        self.apply_btn = ctk.CTkButton(self.apply_frame, text="Apply", command=self.add_group) #change command later
         self.apply_btn.grid(row=0, column=0, padx=5, pady=5)
-        self.csv_export_btn = ctk.CTkButton(self.apply_frame, text="Export Group data to CSV", command=self.export_to_csv) #change command later
+        self.csv_export_btn = ctk.CTkButton(self.apply_frame, text="Export Group data to CSV", command=self.add_group) #change command later
         self.csv_export_btn.grid(row=0, column=1, padx=5, pady=5)
 
     def open_file(self):
@@ -98,15 +98,15 @@ class Groups(ctk.CTkFrame):
 
     def create_groups(self, event=None):
 
-        # # Validate if the data file is loaded
-        # if self.df is None:
-        #     messagebox.showerror("Error", "Please open a data file first.")
-        #     return
+        # Validate if the data file is loaded
+        if self.df is None:
+            messagebox.showerror("Error", "Please open a data file first.")
+            return
 
-        # # Validate if the "Molecules start from" value is selected
-        # if self.molecule_dropdown.get() == 'Select':
-        #     messagebox.showerror("Error", "Please select a value for 'Molecules start from'.")
-        #     return
+        # Validate if the "Molecules start from" value is selected
+        if self.molecule_dropdown.get() == 'Select':
+            messagebox.showerror("Error", "Please select a value for 'Molecules start from'.")
+            return
         
         selected_value = self.group_number_dropdown.get()
         if selected_value.isdigit():  # Check if it's a valid number
@@ -141,8 +141,8 @@ class Groups(ctk.CTkFrame):
 
         criteria_frame = ctk.CTkFrame(container_frame)
         criteria_frame.grid(row=1, column=0, padx=10, pady=5)
-        self.add_criteria(criteria_frame)
-        add_criteria_btn = ctk.CTkButton(container_frame, text="Add Criteria",fg_color='transparent', border_width = 1, command=lambda cf=criteria_frame: self.add_criteria(cf))
+        self.add_criteria(criteria_frame,individual_group_name_entry)
+        add_criteria_btn = ctk.CTkButton(container_frame, text="Add Criteria",fg_color='transparent', border_width = 1, command=lambda cf=criteria_frame: self.add_criteria(cf,individual_group_name_entry))
         add_criteria_btn.grid(row=2, column=0, padx=10, pady=5, sticky = 'w')
 
         self.group_frame.append(individual_group_number_frame)
@@ -169,54 +169,54 @@ class Groups(ctk.CTkFrame):
         current_num_groups = self.total_groups_created 
         self.group_number_dropdown.set(str(current_num_groups))        
 
-    def add_criteria(self, criteria_frame):
-        CriteriaRow(self, criteria_frame, self.molecule_names, self.df) 
+    def add_criteria(self, criteria_frame, individual_group_name_entry):
+        CriteriaRow(self, criteria_frame, self.molecule_names, self.df,individual_group_name_entry) 
 
-    def apply_criteria(self):
-        groups_data = []
+    # def apply_criteria(self):
+    #     groups_data = []
         
-        for group_container in self.parent_group_frame.winfo_children():
-            criteria_rows = group_container.winfo_children()[1].winfo_children()
-            # print(criteria_rows)
-            group_df = self.df.copy()
+    #     for group_container in self.parent_group_frame.winfo_children():
+    #         criteria_rows = group_container.winfo_children()[1].winfo_children()
+    #         # print(criteria_rows)
+    #         group_df = self.df.copy()
             
-            for i in range(0, len(criteria_rows), 9):
-                column = criteria_rows[i + 1].cget("text") if isinstance(criteria_rows[i + 1], ctk.CTkLabel) else criteria_rows[i + 1].get()
-                criteria = criteria_rows[i + 3].cget("text") if isinstance(criteria_rows[i + 3], ctk.CTkLabel) else criteria_rows[i + 3].get()
-                value = criteria_rows[i + 5].cget("text") if isinstance(criteria_rows[i + 5], ctk.CTkLabel) else criteria_rows[i + 5].get()
-                data_rows_label = criteria_rows[i + 7]  # Reference to the data rows label
+    #         for i in range(0, len(criteria_rows), 9):
+    #             column = criteria_rows[i + 1].cget("text") if isinstance(criteria_rows[i + 1], ctk.CTkLabel) else criteria_rows[i + 1].get()
+    #             criteria = criteria_rows[i + 3].cget("text") if isinstance(criteria_rows[i + 3], ctk.CTkLabel) else criteria_rows[i + 3].get()
+    #             value = criteria_rows[i + 5].cget("text") if isinstance(criteria_rows[i + 5], ctk.CTkLabel) else criteria_rows[i + 5].get()
+    #             data_rows_label = criteria_rows[i + 7]  # Reference to the data rows label
             
                 
-                if column and criteria and value:
-                    if criteria in [">", "<", "=", "not ="]:
-                        value = float(value) if pd.api.types.is_numeric_dtype(group_df[column]) else value
-                        if criteria == ">":
-                            group_df = group_df[group_df[column] > value]
-                        elif criteria == "<":
-                            group_df = group_df[group_df[column] < value]
-                        elif criteria == "=":
-                            group_df = group_df[group_df[column] == value]
-                        elif criteria == "not =":
-                            group_df = group_df[group_df[column] != value]
-                    else:
-                        if criteria == "single selection":
-                            group_df = group_df[group_df[column] == value]
-                        elif criteria == "multiple selection":
-                            values = value.split(",")
-                            group_df = group_df[group_df[column].isin(values)]
-                        elif criteria == "not equal":
-                            group_df = group_df[group_df[column] != value]
+    #             if column and criteria and value:
+    #                 if criteria in [">", "<", "=", "not ="]:
+    #                     value = float(value) if pd.api.types.is_numeric_dtype(group_df[column]) else value
+    #                     if criteria == ">":
+    #                         group_df = group_df[group_df[column] > value]
+    #                     elif criteria == "<":
+    #                         group_df = group_df[group_df[column] < value]
+    #                     elif criteria == "=":
+    #                         group_df = group_df[group_df[column] == value]
+    #                     elif criteria == "not =":
+    #                         group_df = group_df[group_df[column] != value]
+    #                 else:
+    #                     if criteria == "single selection":
+    #                         group_df = group_df[group_df[column] == value]
+    #                     elif criteria == "multiple selection":
+    #                         values = value.split(",")
+    #                         group_df = group_df[group_df[column].isin(values)]
+    #                     elif criteria == "not equal":
+    #                         group_df = group_df[group_df[column] != value]
                 
-                data_rows_label.configure(text=str(len(group_df)))  # Update the number of rows label
+    #             data_rows_label.configure(text=str(len(group_df)))  # Update the number of rows label
                 
-            groups_data.append(group_df)
+    #         groups_data.append(group_df)
         
-        self.groups_data = groups_data
-        print(self.groups_data)
+    #     self.groups_data = groups_data
+    #     print(self.groups_data)
 
-    def export_to_csv(self):
-        for idx, group_data in enumerate(self.groups_data):
-            filepath = filedialog.asksaveasfilename(defaultextension=".csv", title=f"Save Group {idx + 1} Data", filetypes=[("CSV files", "*.csv"), ("All files", "*.*")])
-            if filepath:
-                group_data.to_csv(filepath, index=False)
-                messagebox.showinfo("Info", f"Group {idx + 1} data exported to {filepath}")
+    # def export_to_csv(self):
+    #     for idx, group_data in enumerate(self.groups_data):
+    #         filepath = filedialog.asksaveasfilename(defaultextension=".csv", title=f"Save Group {idx + 1} Data", filetypes=[("CSV files", "*.csv"), ("All files", "*.*")])
+    #         if filepath:
+    #             group_data.to_csv(filepath, index=False)
+    #             messagebox.showinfo("Info", f"Group {idx + 1} data exported to {filepath}")

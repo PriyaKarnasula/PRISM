@@ -1,13 +1,16 @@
 import customtkinter as ctk
 import pandas as pd
 from MultiselectDropdown import DropDownMulitSelect
+from tkinter import messagebox
+
 class CriteriaRow(ctk.CTkFrame):
-    def __init__(self, master, parent_frame, molecule_names, df):
+    def __init__(self, master, parent_frame, molecule_names, df,group_name_entry):
         super().__init__(master, )
 
         self.parent_frame = parent_frame
         self.molecule_names = molecule_names
         self.df = df
+        self.group_name_entry = group_name_entry
 
         self.add_criteria_row()
 
@@ -30,7 +33,7 @@ class CriteriaRow(ctk.CTkFrame):
         self.value_label.grid(row=self.row_idx, column=4, padx=10, sticky='e')
         self.value_select = None
         self.selected_values_label = None
-        
+
         self.data_label = ctk.CTkLabel(self.parent_frame, text='Number of Rows:')
         self.data_label.grid(row=self.row_idx, column=6, padx=10, sticky='e')
         self.data_rows_label = ctk.CTkLabel(self.parent_frame, text='#placeholder')
@@ -54,7 +57,16 @@ class CriteriaRow(ctk.CTkFrame):
             self.selected_values_label.destroy()
 
     def update_criteria_dropdown(self, choice):
+        if not self.group_name_entry.get():
+            messagebox.showerror("Error", "Please populate the group name before selecting a grouping column.")
+            self.column_select.set('Select')
+            return
         # Determine criteria options based on the grouping column data type
+        self.criteria_select.set('Select')
+        if self.value_select:
+            self.value_select.destroy()
+        if  self.selected_values_label:
+            self.selected_values_label.destroy()
         if pd.api.types.is_numeric_dtype(self.df[choice]):
             criteria_options = [">", "<", "=", "not ="]
         else:
