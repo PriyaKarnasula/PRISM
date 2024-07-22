@@ -16,7 +16,7 @@ class CriteriaRow(ctk.CTkFrame):
 
     def add_criteria_row(self):
         self.row_idx = len(self.parent_frame.winfo_children())
-
+        # print(self.row_idx)
         self.column_label = ctk.CTkLabel(self.parent_frame, text='Grouping Column')
         self.column_label.grid(row=self.row_idx, column=0, padx=10, sticky='e')
         self.column_select = ctk.CTkComboBox(self.parent_frame, values=self.molecule_names, command = self.update_criteria_dropdown)
@@ -94,3 +94,7 @@ class CriteriaRow(ctk.CTkFrame):
         options_selected = list(self.df[self.column_select.get()].unique())
         options_selected = [str(item) for item in options_selected]
         DropDownMulitSelect(self.parent_frame, options_selected, self.selected_values_label)
+
+    # Add a getter method to retrieve the selected value
+    def get_selected_criteria(self):
+        return self.criteria_select.get()
