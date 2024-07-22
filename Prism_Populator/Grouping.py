@@ -84,14 +84,14 @@ class Groups(ctk.CTkFrame):
 
         self.csv_export_frame = ctk.CTkFrame(nav_frame)
         self.csv_export_frame.grid(row=3, column=1, padx=0, pady=5)
-        self.csv_export_btn = ctk.CTkButton(self.csv_export_frame, text="Export to CSV", command=self.export_to_csv) #change command later
+        self.csv_export_btn = ctk.CTkButton(self.csv_export_frame, text="Export to Excel", command=self.export_to_excel) #change command later
         self.csv_export_btn.grid(row=0, column=0, padx=5, pady=5)
 
         self.preview_prism_frame = ctk.CTkFrame(nav_frame)
         self.preview_prism_frame.grid(row=3, column=2, padx=0, pady=5)
-        self.preview_prism_btn = ctk.CTkButton(self.preview_prism_frame, text="Preview PRISM", command=self.export_to_csv) #change command later
+        self.preview_prism_btn = ctk.CTkButton(self.preview_prism_frame, text="Preview PRISM", command=self.export_to_excel) #change command later
         self.preview_prism_btn.grid(row=0, column=0, padx=5, pady=5)
-        self.prism_export_btn = ctk.CTkButton(self.preview_prism_frame, text="Export to PRISM", command=self.export_to_csv) #change command later
+        self.prism_export_btn = ctk.CTkButton(self.preview_prism_frame, text="Export to PRISM", command=self.export_to_excel) #change command later
         self.prism_export_btn.grid(row=0, column=1, padx=5, pady=5)
 
     def open_file(self):
@@ -227,13 +227,13 @@ class Groups(ctk.CTkFrame):
         if group_number not in self.criteria_rows:
             self.criteria_rows[group_number] = []
         self.criteria_rows[group_number].append(criteria_row_instance)
-        print(criteria_row_instance)
+        # print(criteria_row_instance)
 
     def apply_criteria(self):
         group_data = []
         self.filtered_dfs = []
         for group_id, group_frame in enumerate(self.group_frame):
-            print(group_id, group_frame)
+            # print(group_id, group_frame)
             group_info = {"group_name": None, "criteria": []}
 
             # Find group name entry and criteria frames within the group frame
@@ -242,7 +242,7 @@ class Groups(ctk.CTkFrame):
                     for inner_child in child.winfo_children():
                         if isinstance(inner_child, ctk.CTkEntry):
                             group_info["group_name"] = inner_child.get()
-                            print(group_info["group_name"])
+                            # print(group_info["group_name"])
 
             # Get criteria for the current group
             if group_id + 1 in self.criteria_rows:
@@ -256,38 +256,65 @@ class Groups(ctk.CTkFrame):
         for group in group_data:
             if not group["group_name"]:
                 continue
-
+            print(f"Applying criteria for group: {group['group_name']}")
+            print(f"Criteria: {group['criteria']}")
             filtered_df = self.df.copy()
             for criteria in group["criteria"]:
-                if criteria["criteria"] == "Equals":
-                    filtered_df = filtered_df[filtered_df[criteria["column"]].isin(criteria["value"])]
-                elif criteria["criteria"] == "Not Equal":
-                    filtered_df = filtered_df[~filtered_df[criteria["column"]].isin(criteria["value"])]
-                elif criteria["criteria"] == ">":
-                    filtered_df = filtered_df[filtered_df[criteria["column"]] > float(criteria["value"])]
-                elif criteria["criteria"] == "<":
-                    filtered_df = filtered_df[filtered_df[criteria["column"]] < float(criteria["value"])]
-                elif criteria["criteria"] == "=":
-                    filtered_df = filtered_df[filtered_df[criteria["column"]] == float(criteria["value"])]
-                elif criteria["criteria"] == "not =":
-                    filtered_df = filtered_df[filtered_df[criteria["column"]] != float(criteria["value"])]
+                column = criteria["column"]
+                value = criteria["value"]
+                crit_type = criteria["criteria"]
+                
+                if crit_type == "Equals":
+                    if column in filtered_df.columns:
+                        filtered_df = filtered_df[filtered_df[column].isin(value)]
+                    else:
+                        print(f"Column {column} not found in DataFrame.")
+                elif crit_type == "Not Equal":
+                    if column in filtered_df.columns:
+                        filtered_df = filtered_df[~filtered_df[column].isin(value)]
+                    else:
+                        print(f"Column {column} not found in DataFrame.")
+                elif crit_type == ">":
+                    if column in filtered_df.columns:
+                        filtered_df = filtered_df[filtered_df[column] > float(value)]
+                    else:
+                        print(f"Column {column} not found in DataFrame.")
+                elif crit_type == "<":
+                    if column in filtered_df.columns:
+                        filtered_df = filtered_df[filtered_df[column] < float(value)]
+                    else:
+                        print(f"Column {column} not found in DataFrame.")
+                elif crit_type == "=":
+                    if column in filtered_df.columns:
+                        filtered_df = filtered_df[filtered_df[column] == float(value)]
+                    else:
+                        print(f"Column {column} not found in DataFrame.")
+                elif crit_type == "not =":
+                    if column in filtered_df.columns:
+                        filtered_df = filtered_df[filtered_df[column] != float(value)]
+                    else:
+                        print(f"Column {column} not found in DataFrame.")
 
             self.filtered_dfs.append((group["group_name"], filtered_df))
-
+            print(f"Filtered DataFrame for group {group['group_name']}:\n", filtered_df)
         print("Filtered DataFrames created successfully.")
-        print(self.filtered_dfs)
 
-    def export_to_csv(self):
+    def export_to_excel(self):
         if not hasattr(self, 'filtered_dfs') or not self.filtered_dfs:
             messagebox.showerror("Error", "No data available. Please create the groups and apply the filters.")
             return
+        # Ask user for a save location
+        file_path = filedialog.asksaveasfilename(defaultextension=".xlsx",
+                                                 filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+                                                 initialfile="Filtered_Data.xlsx")
+        if not file_path:
+            return  # If user cancels, do nothing
 
-        for group_name, df in self.filtered_dfs:
-            filename = f"{group_name}.csv"
-            df.to_csv(filename, index=False)
-            print(f"Data for group {group_name} exported to {filename}.")
+        with pd.ExcelWriter(file_path, engine='xlsxwriter') as writer:
+            for group_name, df in self.filtered_dfs:
+                df.to_excel(writer, sheet_name=group_name, index=False)
 
-        print("All filtered data exported successfully.")
+        print(f"Excel file saved to {file_path}")
 
     def get_criteria(self):
         # Call the getter method to get the selected value from the combo box

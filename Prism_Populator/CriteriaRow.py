@@ -76,6 +76,10 @@ class CriteriaRow(ctk.CTkFrame):
     
 
     def update_value_input_type(self, criteria):
+        if self.value_select:
+            self.value_select.destroy()
+        if  self.selected_values_label:
+            self.selected_values_label.destroy()
         selected_column = self.column_select.get()
         if criteria in ["Equals", "Not Equal"]:
             self.value_select = ctk.CTkButton(self.parent_frame, text="Click to Select", command=self.open_multiselect_dropdown)
@@ -95,6 +99,32 @@ class CriteriaRow(ctk.CTkFrame):
         options_selected = [str(item) for item in options_selected]
         DropDownMulitSelect(self.parent_frame, options_selected, self.selected_values_label)
 
-    # Add a getter method to retrieve the selected value
+    # Add a getter method to retrieve the selected values
+    
     def get_selected_criteria(self):
-        return self.criteria_select.get()
+            selected_criteria = self.criteria_select.get()
+            selected_column = self.column_select.get()
+
+            if selected_criteria in ["Equals", "Not Equal"]:
+                if self.selected_values_label:
+                    # Extract and clean the selected values
+                    raw_values = self.selected_values_label.get("1.0", "end-1c").strip()
+                    value = [v.strip() for v in raw_values.split("\n") if v.strip()]
+                else:
+                    value = []
+                # if self.selected_values_label:
+                #     value = self.selected_values_label.get("1.0", "end-1c").split(",")
+                #     value = [v.strip() for v in value if v.strip()]
+                # else:
+                #     value = []
+            else:
+                if self.value_select:
+                    value = self.value_select.get()
+                else:
+                    value = None
+            
+            return {
+                "criteria": selected_criteria,
+                "column": selected_column,
+                "value": value
+            }
