@@ -35,9 +35,6 @@ class Groups(ctk.CTkFrame):
         self.file_frame.grid(row=0,column=0, padx=50, pady=0)
         open_file_btn = ctk.CTkButton(self.file_frame, text="Open Data File", command=self.open_file)
         open_file_btn.grid(row=0,column=0)
-        # self.filepath_label = ctk.CTkLabel(self.file_frame, text="No File Loaded")
-        # self.filepath_label.grid(row=0,column=1,padx =10, sticky="w")
-
 
         self.molecule_frame = ctk.CTkFrame(nav_frame)
         self.molecule_frame.grid(row=0,column=2, padx=10)
@@ -114,12 +111,9 @@ class Groups(ctk.CTkFrame):
     def load_file(self, filepath):
         try:
             self.df = pd.read_csv(filepath, index_col=False, low_memory=False)
-            # print(self.df)
             self.molecule_names = self.df.columns[1:].tolist()
             self.is_roi = False
             self.update_molecule_dropdown()
-            # filename = os.path.basename(filepath)
-            # self.filepath_label.configure(text=filename)
         except Exception as e:
             print(f"Failed to load file: {e}")
         finally:
@@ -138,7 +132,7 @@ class Groups(ctk.CTkFrame):
             messagebox.showerror("Error", "Please select a value for 'Molecules start from'.")
             return
 
-        # Find the index of the selected molecule
+        # Index of the selected molecule
         start_index = self.df.columns.get_loc(selected_molecule)
 
         # Get all columns from the selected molecule to the end
@@ -232,9 +226,11 @@ class Groups(ctk.CTkFrame):
     def apply_criteria(self):
         group_data = []
         self.filtered_dfs = []
+        criteria_data = []  # List to hold criteria information for the final DataFrame
+
         for group_id, group_frame in enumerate(self.group_frame):
-            # print(group_id, group_frame)
             group_info = {"group_name": None, "criteria": []}
+            filtered_df = self.df.copy()
 
             # Find group name entry and criteria frames within the group frame
             for child in group_frame.winfo_children():
@@ -242,75 +238,84 @@ class Groups(ctk.CTkFrame):
                     for inner_child in child.winfo_children():
                         if isinstance(inner_child, ctk.CTkEntry):
                             group_info["group_name"] = inner_child.get()
-                            # print(group_info["group_name"])
 
-            # Get criteria for the current group
+            # Get criteria for the current group and apply them
             if group_id + 1 in self.criteria_rows:
                 for criteria_row in self.criteria_rows[group_id + 1]:
                     selected_criteria = criteria_row.get_selected_criteria()
                     group_info["criteria"].append(selected_criteria)
-                    print(f"Selected criteria for group {group_id + 1}: {selected_criteria}")
+
+                    # Apply criteria
+                    column = selected_criteria["column"]
+                    value = selected_criteria["value"]
+                    crit_type = selected_criteria["criteria"]
+
+                    if crit_type == "Equals":
+                        if column in filtered_df.columns:
+                            filtered_df = filtered_df[filtered_df[column].isin(value)]
+                    elif crit_type == "Not Equal":
+                        if column in filtered_df.columns:
+                            filtered_df = filtered_df[~filtered_df[column].isin(value)]
+                    elif crit_type == ">":
+                        if column in filtered_df.columns:
+                            filtered_df = filtered_df[filtered_df[column] > float(value)]
+                    elif crit_type == "<":
+                        if column in filtered_df.columns:
+                            filtered_df = filtered_df[filtered_df[column] < float(value)]
+                    elif crit_type == "=":
+                        if column in filtered_df.columns:
+                            filtered_df = filtered_df[filtered_df[column] == float(value)]
+                    elif crit_type == "not =":
+                        if column in filtered_df.columns:
+                            filtered_df = filtered_df[filtered_df[column] != float(value)]
+
+                    # Get the number of rows after applying the filter
+                    num_rows = filtered_df.shape[0]
+
+                    # Update the GUI label with the number of rows
+                    criteria_row.update_data_rows_label(num_rows)
+
+                    # Add criteria information and row count to the criteria_data list
+                    criteria_data.append({
+                        "Group Name": group_info["group_name"],
+                        "Grouping Column": selected_criteria["column"],
+                        "Grouping Criteria": selected_criteria["criteria"],
+                        "Values": ", ".join(selected_criteria["value"]) if isinstance(selected_criteria["value"], list) else selected_criteria["value"],
+                        "Number of Rows": filtered_df.shape[0]
+                    })
 
             group_data.append(group_info)
 
-        for group in group_data:
-            if not group["group_name"]:
-                continue
-            print(f"Applying criteria for group: {group['group_name']}")
-            print(f"Criteria: {group['criteria']}")
-            filtered_df = self.df.copy()
-            for criteria in group["criteria"]:
-                column = criteria["column"]
-                value = criteria["value"]
-                crit_type = criteria["criteria"]
-                
-                if crit_type == "Equals":
-                    if column in filtered_df.columns:
-                        filtered_df = filtered_df[filtered_df[column].isin(value)]
-                    else:
-                        print(f"Column {column} not found in DataFrame.")
-                elif crit_type == "Not Equal":
-                    if column in filtered_df.columns:
-                        filtered_df = filtered_df[~filtered_df[column].isin(value)]
-                    else:
-                        print(f"Column {column} not found in DataFrame.")
-                elif crit_type == ">":
-                    if column in filtered_df.columns:
-                        filtered_df = filtered_df[filtered_df[column] > float(value)]
-                    else:
-                        print(f"Column {column} not found in DataFrame.")
-                elif crit_type == "<":
-                    if column in filtered_df.columns:
-                        filtered_df = filtered_df[filtered_df[column] < float(value)]
-                    else:
-                        print(f"Column {column} not found in DataFrame.")
-                elif crit_type == "=":
-                    if column in filtered_df.columns:
-                        filtered_df = filtered_df[filtered_df[column] == float(value)]
-                    else:
-                        print(f"Column {column} not found in DataFrame.")
-                elif crit_type == "not =":
-                    if column in filtered_df.columns:
-                        filtered_df = filtered_df[filtered_df[column] != float(value)]
-                    else:
-                        print(f"Column {column} not found in DataFrame.")
+            if group_info["group_name"]:
+                self.filtered_dfs.append((group_info["group_name"], filtered_df))
+                print(f"Filtered DataFrame for group {group_info['group_name']}:\n", filtered_df)
 
-            self.filtered_dfs.append((group["group_name"], filtered_df))
-            print(f"Filtered DataFrame for group {group['group_name']}:\n", filtered_df)
         print("Filtered DataFrames created successfully.")
+
+        # Create and print the final DataFrame with criteria information
+        self.criteria_df = pd.DataFrame(criteria_data)
+        print("Criteria DataFrame:\n", self.criteria_df)
 
     def export_to_excel(self):
         if not hasattr(self, 'filtered_dfs') or not self.filtered_dfs:
             messagebox.showerror("Error", "No data available. Please create the groups and apply the filters.")
             return
+        if not hasattr(self, 'criteria_df') or self.criteria_df.empty:
+            messagebox.showerror("Error", "Please apply the filters before exporting to excel.")
+            return
+
         # Ask user for a save location
         file_path = filedialog.asksaveasfilename(defaultextension=".xlsx",
-                                                 filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
-                                                 initialfile="Filtered_Data.xlsx")
+                                                filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+                                                initialfile="Filtered_Data.xlsx")
         if not file_path:
             return  # If user cancels, do nothing
 
         with pd.ExcelWriter(file_path, engine='xlsxwriter') as writer:
+            # Write criteria_df to the first sheet
+            self.criteria_df.to_excel(writer, sheet_name="Criteria", index=False)
+            
+            # Write each filtered DataFrame to subsequent sheets
             for group_name, df in self.filtered_dfs:
                 df.to_excel(writer, sheet_name=group_name, index=False)
 

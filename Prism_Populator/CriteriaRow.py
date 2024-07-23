@@ -34,9 +34,9 @@ class CriteriaRow(ctk.CTkFrame):
         self.value_select = None
         self.selected_values_label = None
 
-        self.data_label = ctk.CTkLabel(self.parent_frame, text='Number of Rows:')
+        self.data_label = ctk.CTkLabel(self.parent_frame, text='Data Rows:')
         self.data_label.grid(row=self.row_idx, column=6, padx=10, sticky='e')
-        self.data_rows_label = ctk.CTkLabel(self.parent_frame, text='#placeholder')
+        self.data_rows_label = ctk.CTkLabel(self.parent_frame, text='0')
         self.data_rows_label.grid(row=self.row_idx, column=7, pady=5)
 
         self.delete_criteria_btn = ctk.CTkButton(self.parent_frame, text="Delete Criteria", fg_color='transparent', border_width=1, command=self.delete_criteria)
@@ -99,7 +99,7 @@ class CriteriaRow(ctk.CTkFrame):
         options_selected = [str(item) for item in options_selected]
         DropDownMulitSelect(self.parent_frame, options_selected, self.selected_values_label)
 
-    # Add a getter method to retrieve the selected values
+    # Retrieve the selected values
     
     def get_selected_criteria(self):
             selected_criteria = self.criteria_select.get()
@@ -107,16 +107,10 @@ class CriteriaRow(ctk.CTkFrame):
 
             if selected_criteria in ["Equals", "Not Equal"]:
                 if self.selected_values_label:
-                    # Extract and clean the selected values
-                    raw_values = self.selected_values_label.get("1.0", "end-1c").strip()
+                    raw_values = self.selected_values_label.get("2.0", "end-1c").strip()
                     value = [v.strip() for v in raw_values.split("\n") if v.strip()]
                 else:
                     value = []
-                # if self.selected_values_label:
-                #     value = self.selected_values_label.get("1.0", "end-1c").split(",")
-                #     value = [v.strip() for v in value if v.strip()]
-                # else:
-                #     value = []
             else:
                 if self.value_select:
                     value = self.value_select.get()
@@ -128,3 +122,7 @@ class CriteriaRow(ctk.CTkFrame):
                 "column": selected_column,
                 "value": value
             }
+    
+    # Method to update the data rows label
+    def update_data_rows_label(self, num_rows):
+        self.data_rows_label.configure(text=str(num_rows))
