@@ -4,6 +4,7 @@ from tkinter import filedialog
 import threading
 from tkinter import messagebox
 from CriteriaRow import CriteriaRow  # Import the CriteriaRow class
+from CriteriaApply import CriteriaApplication  # Import the new class
 from MultiselectDropdown import DropDownMulitSelect
 import os
 
@@ -30,6 +31,7 @@ class Groups(ctk.CTkFrame):
         self.molecule_names = []
         self.df = None
         self.criteria_rows = {}  # Dictionary to store CriteriaRow instances by group ID or name
+        self.criteria_application = CriteriaApplication(self)
 
         self.file_frame = ctk.CTkFrame(nav_frame)
         self.file_frame.grid(row=0,column=0, padx=50, pady=0)
@@ -76,7 +78,7 @@ class Groups(ctk.CTkFrame):
 
         self.apply_frame = ctk.CTkFrame(nav_frame)
         self.apply_frame.grid(row=3, column=0, padx=5, pady=5)
-        self.apply_btn = ctk.CTkButton(self.apply_frame, text="Apply Filters", command=self.apply_criteria) #change command later
+        self.apply_btn = ctk.CTkButton(self.apply_frame, text="Apply Filters", command=self.criteria_application.apply_criteria) #change command later
         self.apply_btn.grid(row=0, column=0, padx=5, pady=5)
 
         self.csv_export_frame = ctk.CTkFrame(nav_frame)
@@ -202,7 +204,13 @@ class Groups(ctk.CTkFrame):
             self.total_groups_created += 1  # Update total groups created
             group_container_frame = ctk.CTkFrame(self.parent_group_frame, border_width=2, corner_radius=10)
             self.create_group(new_group_number, group_container_frame)
-            group_container_frame.grid(row =new_group_number, column =0, padx = 10, pady = 10, sticky = 'w')
+            group_container_frame.grid(row =new_group_number, column =0, padx = 10, pady = 5)
+            group_container_frame.grid_columnconfigure(0, weight =1)
+            group_container_frame.grid_rowconfigure(0, weight =1)
+            group_container_frame.columnconfigure(0, weight =1)
+            group_container_frame.rowconfigure(0, weight =1)
+            group_container_frame.columnconfigure(1, weight =1)
+            group_container_frame.rowconfigure(1, weight =1)
             self.group_frame.append(group_container_frame)
             self.update_group_dropdown()  # Update the dropdown when a new group is created
 
@@ -222,79 +230,6 @@ class Groups(ctk.CTkFrame):
             self.criteria_rows[group_number] = []
         self.criteria_rows[group_number].append(criteria_row_instance)
         # print(criteria_row_instance)
-
-    def apply_criteria(self):
-        group_data = []
-        self.filtered_dfs = []
-        criteria_data = []  # List to hold criteria information for the final DataFrame
-
-        for group_id, group_frame in enumerate(self.group_frame):
-            group_info = {"group_name": None, "criteria": []}
-            filtered_df = self.df.copy()
-
-            # Find group name entry and criteria frames within the group frame
-            for child in group_frame.winfo_children():
-                if isinstance(child, ctk.CTkFrame):
-                    for inner_child in child.winfo_children():
-                        if isinstance(inner_child, ctk.CTkEntry):
-                            group_info["group_name"] = inner_child.get()
-
-            # Get criteria for the current group and apply them
-            if group_id + 1 in self.criteria_rows:
-                for criteria_row in self.criteria_rows[group_id + 1]:
-                    selected_criteria = criteria_row.get_selected_criteria()
-                    group_info["criteria"].append(selected_criteria)
-
-                    # Apply criteria
-                    column = selected_criteria["column"]
-                    value = selected_criteria["value"]
-                    crit_type = selected_criteria["criteria"]
-
-                    if crit_type == "Equals":
-                        if column in filtered_df.columns:
-                            filtered_df = filtered_df[filtered_df[column].isin(value)]
-                    elif crit_type == "Not Equal":
-                        if column in filtered_df.columns:
-                            filtered_df = filtered_df[~filtered_df[column].isin(value)]
-                    elif crit_type == ">":
-                        if column in filtered_df.columns:
-                            filtered_df = filtered_df[filtered_df[column] > float(value)]
-                    elif crit_type == "<":
-                        if column in filtered_df.columns:
-                            filtered_df = filtered_df[filtered_df[column] < float(value)]
-                    elif crit_type == "=":
-                        if column in filtered_df.columns:
-                            filtered_df = filtered_df[filtered_df[column] == float(value)]
-                    elif crit_type == "not =":
-                        if column in filtered_df.columns:
-                            filtered_df = filtered_df[filtered_df[column] != float(value)]
-
-                    # Get the number of rows after applying the filter
-                    num_rows = filtered_df.shape[0]
-
-                    # Update the GUI label with the number of rows
-                    criteria_row.update_data_rows_label(num_rows)
-
-                    # Add criteria information and row count to the criteria_data list
-                    criteria_data.append({
-                        "Group Name": group_info["group_name"],
-                        "Grouping Column": selected_criteria["column"],
-                        "Grouping Criteria": selected_criteria["criteria"],
-                        "Values": ", ".join(selected_criteria["value"]) if isinstance(selected_criteria["value"], list) else selected_criteria["value"],
-                        "Number of Rows": filtered_df.shape[0]
-                    })
-
-            group_data.append(group_info)
-
-            if group_info["group_name"]:
-                self.filtered_dfs.append((group_info["group_name"], filtered_df))
-                print(f"Filtered DataFrame for group {group_info['group_name']}:\n", filtered_df)
-
-        print("Filtered DataFrames created successfully.")
-
-        # Create and print the final DataFrame with criteria information
-        self.criteria_df = pd.DataFrame(criteria_data)
-        print("Criteria DataFrame:\n", self.criteria_df)
 
     def export_to_excel(self):
         if not hasattr(self, 'filtered_dfs') or not self.filtered_dfs:
