@@ -32,6 +32,7 @@ class Groups(ctk.CTkFrame):
         self.df = None
         self.criteria_rows = {}  # Dictionary to store CriteriaRow instances by group ID or name
         self.criteria_application = CriteriaApplication(self)
+        self.selected_molecules = []
 
         self.file_frame = ctk.CTkFrame(nav_frame)
         self.file_frame.grid(row=0,column=0, padx=50, pady=0)
@@ -199,20 +200,23 @@ class Groups(ctk.CTkFrame):
     def add_group(self):
         if not hasattr(self, 'group_frame') or not self.group_frame:
             messagebox.showerror("Error", "No groups created yet. Please create groups first.")
-        else:
-            new_group_number = self.total_groups_created + 1  # Increment the group number correctly
-            self.total_groups_created += 1  # Update total groups created
-            group_container_frame = ctk.CTkFrame(self.parent_group_frame, border_width=2, corner_radius=10)
-            self.create_group(new_group_number, group_container_frame)
-            group_container_frame.grid(row =new_group_number, column =0, padx = 10, pady = 5)
-            group_container_frame.grid_columnconfigure(0, weight =1)
-            group_container_frame.grid_rowconfigure(0, weight =1)
-            group_container_frame.columnconfigure(0, weight =1)
-            group_container_frame.rowconfigure(0, weight =1)
-            group_container_frame.columnconfigure(1, weight =1)
-            group_container_frame.rowconfigure(1, weight =1)
-            self.group_frame.append(group_container_frame)
-            self.update_group_dropdown()  # Update the dropdown when a new group is created
+            return
+        if self.total_groups_created == 15:
+            messagebox.showerror("Error", "Maximum number of groups are already created.")
+            return
+        new_group_number = self.total_groups_created + 1  # Increment the group number correctly
+        self.total_groups_created += 1  # Update total groups created
+        group_container_frame = ctk.CTkFrame(self.parent_group_frame, border_width=2, corner_radius=10)
+        self.create_group(new_group_number, group_container_frame)
+        group_container_frame.grid(row =new_group_number, column =0, padx = 10, pady = 5)
+        group_container_frame.grid_columnconfigure(0, weight =1)
+        group_container_frame.grid_rowconfigure(0, weight =1)
+        group_container_frame.columnconfigure(0, weight =1)
+        group_container_frame.rowconfigure(0, weight =1)
+        group_container_frame.columnconfigure(1, weight =1)
+        group_container_frame.rowconfigure(1, weight =1)
+        self.group_frame.append(group_container_frame)
+        self.update_group_dropdown()  # Update the dropdown when a new group is created
 
     def delete_group(self, group_frame):
         group_frame.destroy()

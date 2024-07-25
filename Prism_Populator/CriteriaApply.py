@@ -1,17 +1,26 @@
 import pandas as pd
 import customtkinter as ctk
+from tkinter import messagebox
+from tkinter import filedialog
 
 class CriteriaApplication:
     def __init__(self, parent):
         self.parent = parent
 
     def apply_criteria(self):
+        if not self.parent.selected_values_label:
+            messagebox.showerror("Error", "Please select molecules before applying filters.")
+            return
         if not hasattr(self.parent, 'group_frame') or not self.parent.group_frame:
-            ctk.messagebox.showerror("Error", "No groups created yet. Please create groups first.")
+            messagebox.showerror("Error", "No groups created yet. Please create groups first.")
             return
         group_data = []
         self.parent.filtered_dfs = []
         criteria_data = []  # List to hold criteria information for the final DataFrame
+
+        # Get the selected molecules
+        selected_molecules = self.parent.selected_values_label.get("2.0", "end-1c").strip()
+        selected_molecules = [m.strip() for m in selected_molecules.split("\n")  if m.strip()]
 
         for group_id, group_frame in enumerate(self.parent.group_frame):
             group_info = {"group_name": None, "criteria": []}
@@ -34,7 +43,7 @@ class CriteriaApplication:
                     column = selected_criteria["column"]
                     value = selected_criteria["value"]
                     crit_type = selected_criteria["criteria"]
-
+        
                     if crit_type == "Equals":
                         if column in filtered_df.columns:
                             filtered_df = filtered_df[filtered_df[column].isin(value)]
@@ -70,6 +79,11 @@ class CriteriaApplication:
                     })
 
             group_data.append(group_info)
+
+            # Filter the DataFrame to include only the selected molecules
+            if selected_molecules:
+                valid_columns = [col for col in selected_molecules if col in self.parent.df.columns]
+                filtered_df = filtered_df[valid_columns]
 
             if group_info["group_name"]:
                 self.parent.filtered_dfs.append((group_info["group_name"], filtered_df))

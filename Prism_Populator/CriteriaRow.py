@@ -63,6 +63,7 @@ class CriteriaRow(ctk.CTkFrame):
             return
         # Determine criteria options based on the grouping column data type
         self.criteria_select.set('Select')
+        self.data_rows_label.configure(text='0')
         if self.value_select:
             self.value_select.destroy()
         if  self.selected_values_label:
@@ -102,6 +103,7 @@ class CriteriaRow(ctk.CTkFrame):
     # Retrieve the selected values
     
     def get_selected_criteria(self):
+        try:
             selected_criteria = self.criteria_select.get()
             selected_column = self.column_select.get()
 
@@ -122,7 +124,9 @@ class CriteriaRow(ctk.CTkFrame):
                 "column": selected_column,
                 "value": value
             }
-    
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while retrieving selected criteria: {e}")
+            return None
     # Method to update the data rows label
     def update_data_rows_label(self, num_rows):
         self.data_rows_label.configure(text=str(num_rows))
