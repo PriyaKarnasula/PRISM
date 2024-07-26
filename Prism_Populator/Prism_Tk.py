@@ -18,7 +18,7 @@ class Prism(ctk.CTk):
 
     def __init__(self):
         super().__init__()
-        self.title("Prism")
+        self.title("PRISM")
         self.geometry("2500x1000")
 
         self.parent_frame = ctk.CTkFrame(self)

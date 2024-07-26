@@ -89,7 +89,7 @@ class Groups(ctk.CTkFrame):
 
         self.preview_prism_frame = ctk.CTkFrame(nav_frame)
         self.preview_prism_frame.grid(row=3, column=2, padx=0, pady=5)
-        self.preview_prism_btn = ctk.CTkButton(self.preview_prism_frame, text="Preview PRISM", command=self.export_to_excel) #change command later
+        self.preview_prism_btn = ctk.CTkButton(self.preview_prism_frame, text="Preview Graph", command=self.export_to_excel) #change command later
         self.preview_prism_btn.grid(row=0, column=0, padx=5, pady=5)
         self.prism_export_btn = ctk.CTkButton(self.preview_prism_frame, text="Export to PRISM", command=self.export_to_excel) #change command later
         self.prism_export_btn.grid(row=0, column=1, padx=5, pady=5)
@@ -202,7 +202,7 @@ class Groups(ctk.CTkFrame):
             messagebox.showerror("Error", "No groups created yet. Please create groups first.")
             return
         if self.total_groups_created == 15:
-            messagebox.showerror("Error", "Maximum number of groups are already created.")
+            messagebox.showerror("Error", "Maximum number of groups reached.")
             return
         new_group_number = self.total_groups_created + 1  # Increment the group number correctly
         self.total_groups_created += 1  # Update total groups created

@@ -127,6 +127,7 @@ class CriteriaRow(ctk.CTkFrame):
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while retrieving selected criteria: {e}")
             return None
+        
     # Method to update the data rows label
     def update_data_rows_label(self, num_rows):
         self.data_rows_label.configure(text=str(num_rows))

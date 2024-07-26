@@ -43,13 +43,35 @@ class CriteriaApplication:
                     column = selected_criteria["column"]
                     value = selected_criteria["value"]
                     crit_type = selected_criteria["criteria"]
-        
+
+                    if column is None or value is None or crit_type is None:
+                        continue
+
                     if crit_type == "Equals":
                         if column in filtered_df.columns:
-                            filtered_df = filtered_df[filtered_df[column].isin(value)]
+                            nan_filter = filtered_df[column].isna()
+                            value_filter = filtered_df[column].isin([v for v in value if v != "nan"])
+                            combined_filter = value_filter | (nan_filter & ("nan" in value))
+                            filtered_df = filtered_df[combined_filter]
                     elif crit_type == "Not Equal":
                         if column in filtered_df.columns:
-                            filtered_df = filtered_df[~filtered_df[column].isin(value)]
+                            nan_filter = filtered_df[column].isna()
+                            value_filter = filtered_df[column].isin([v for v in value if v != "nan"])
+                            combined_filter = ~value_filter & (~nan_filter | ("nan" not in value))
+                            filtered_df = filtered_df[combined_filter]
+
+                    # if crit_type == "Equals":
+                    #     if column in filtered_df.columns:
+                    #         if "nan" in value or any(pd.isna(v) for v in value):
+                    #             nan_filtered = filtered_df[pd.isna(filtered_df[column])]
+                    #         else:
+                    #             filtered_df = filtered_df[filtered_df[column].isin(value)]
+                    # elif crit_type == "Not Equal":
+                    #     if column in filtered_df.columns:
+                    #         if "nan" in value or any(pd.isna(v) for v in value):
+                    #             filtered_df = filtered_df[~pd.isna(filtered_df[column])]
+                    #         else:
+                    #             filtered_df = filtered_df[~filtered_df[column].isin(value)]
                     elif crit_type == ">":
                         if column in filtered_df.columns:
                             filtered_df = filtered_df[filtered_df[column] > float(value)]
