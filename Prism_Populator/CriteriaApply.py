@@ -14,6 +14,13 @@ class CriteriaApplication:
         if not hasattr(self.parent, 'group_frame') or not self.parent.group_frame:
             messagebox.showerror("Error", "No groups created yet. Please create groups first.")
             return
+        
+        # Clean up criteria rows before applying criteria
+        for group_id in self.parent.criteria_rows.keys():
+            self.parent.criteria_rows[group_id] = [
+                row for row in self.parent.criteria_rows[group_id] if row is not None
+            ]
+
         group_data = []
         self.parent.filtered_dfs = []
         criteria_data = []  # List to hold criteria information for the final DataFrame
@@ -35,17 +42,22 @@ class CriteriaApplication:
 
             # Get criteria for the current group and apply them
             if group_id + 1 in self.parent.criteria_rows:
+                valid_criteria_rows = [] # List to hold valid criteria rows and remove deleted crieria
                 for criteria_row in self.parent.criteria_rows[group_id + 1]:
-                    selected_criteria = criteria_row.get_selected_criteria()
+                    if criteria_row is None:
+                        continue
+                    if criteria_row and criteria_row.winfo_exists():
+                        selected_criteria = criteria_row.get_selected_criteria()
+                    # Check if the criteria is valid
+                    if not criteria_row.winfo_exists():
+                        continue
+                    if (selected_criteria["column"] in ['None', ""] or selected_criteria["criteria"] in ['None', ""]):
+                        continue                        
                     group_info["criteria"].append(selected_criteria)
-
                     # Apply criteria
                     column = selected_criteria["column"]
                     value = selected_criteria["value"]
                     crit_type = selected_criteria["criteria"]
-
-                    if column is None or value is None or crit_type is None:
-                        continue
 
                     if crit_type == "Equals":
                         if column in filtered_df.columns:
@@ -59,19 +71,6 @@ class CriteriaApplication:
                             value_filter = filtered_df[column].isin([v for v in value if v != "nan"])
                             combined_filter = ~value_filter & (~nan_filter | ("nan" not in value))
                             filtered_df = filtered_df[combined_filter]
-
-                    # if crit_type == "Equals":
-                    #     if column in filtered_df.columns:
-                    #         if "nan" in value or any(pd.isna(v) for v in value):
-                    #             nan_filtered = filtered_df[pd.isna(filtered_df[column])]
-                    #         else:
-                    #             filtered_df = filtered_df[filtered_df[column].isin(value)]
-                    # elif crit_type == "Not Equal":
-                    #     if column in filtered_df.columns:
-                    #         if "nan" in value or any(pd.isna(v) for v in value):
-                    #             filtered_df = filtered_df[~pd.isna(filtered_df[column])]
-                    #         else:
-                    #             filtered_df = filtered_df[~filtered_df[column].isin(value)]
                     elif crit_type == ">":
                         if column in filtered_df.columns:
                             filtered_df = filtered_df[filtered_df[column] > float(value)]
@@ -116,3 +115,12 @@ class CriteriaApplication:
         # Create and print the final DataFrame with criteria information
         self.parent.criteria_df = pd.DataFrame(criteria_data)
         print("Criteria DataFrame:\n", self.parent.criteria_df)
+
+        # Frame for displaying group names
+        self.group_names_frame = ctk.CTkFrame(self.parent.parent_group_frame)
+        self.group_names_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 10), pady=(10, 10))
+        ctk.CTkLabel(self.group_names_frame, text="Group Name").grid(row=0, column=0, padx=10, pady=10)
+        ctk.CTkLabel(self.group_names_frame, text="Number of Rows").grid(row=0, column=1, padx=10, pady=10)
+        for idx, group_info in enumerate(group_data):
+            ctk.CTkLabel(self.group_names_frame, text=group_info["group_name"]).grid(row=idx+1, column=0, padx=10, pady=10)
+            ctk.CTkLabel(self.group_names_frame, text=str(self.parent.filtered_dfs[idx][1].shape[0])).grid(row=idx+1, column=1, padx=10, pady=10)        

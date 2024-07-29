@@ -82,16 +82,16 @@ class Groups(ctk.CTkFrame):
         self.apply_btn = ctk.CTkButton(self.apply_frame, text="Apply Filters", command=self.criteria_application.apply_criteria) #change command later
         self.apply_btn.grid(row=0, column=0, padx=5, pady=5)
 
+        self.preview_graph_frame = ctk.CTkFrame(nav_frame)
+        self.preview_graph_frame.grid(row=3, column=1, padx=0, pady=5)
+        self.preview_graph_btn = ctk.CTkButton(self.preview_graph_frame, text="Preview Graph", command=self.export_to_excel) #change command later
+        self.preview_graph_btn.grid(row=0, column=0, padx=5, pady=5)
+
         self.csv_export_frame = ctk.CTkFrame(nav_frame)
-        self.csv_export_frame.grid(row=3, column=1, padx=0, pady=5)
+        self.csv_export_frame.grid(row=3, column=2, padx=0, pady=5)
         self.csv_export_btn = ctk.CTkButton(self.csv_export_frame, text="Export to Excel", command=self.export_to_excel) #change command later
         self.csv_export_btn.grid(row=0, column=0, padx=5, pady=5)
-
-        self.preview_prism_frame = ctk.CTkFrame(nav_frame)
-        self.preview_prism_frame.grid(row=3, column=2, padx=0, pady=5)
-        self.preview_prism_btn = ctk.CTkButton(self.preview_prism_frame, text="Preview Graph", command=self.export_to_excel) #change command later
-        self.preview_prism_btn.grid(row=0, column=0, padx=5, pady=5)
-        self.prism_export_btn = ctk.CTkButton(self.preview_prism_frame, text="Export to PRISM", command=self.export_to_excel) #change command later
+        self.prism_export_btn = ctk.CTkButton(self.csv_export_frame, text="Export to PRISM", command=self.export_to_excel) #change command later
         self.prism_export_btn.grid(row=0, column=1, padx=5, pady=5)
 
     def open_file(self):
@@ -229,7 +229,7 @@ class Groups(ctk.CTkFrame):
         self.group_number_dropdown.set(str(current_num_groups))        
 
     def add_criteria(self, group_number, criteria_frame, individual_group_name_entry):
-        criteria_row_instance = CriteriaRow(self, criteria_frame, self.molecule_names, self.df,individual_group_name_entry) 
+        criteria_row_instance = CriteriaRow(self, criteria_frame, self.molecule_names, self.df,individual_group_name_entry,  parent_class=self) 
         if group_number not in self.criteria_rows:
             self.criteria_rows[group_number] = []
         self.criteria_rows[group_number].append(criteria_row_instance)

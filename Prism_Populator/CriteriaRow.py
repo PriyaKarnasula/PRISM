@@ -4,13 +4,14 @@ from MultiselectDropdown import DropDownMulitSelect
 from tkinter import messagebox
 
 class CriteriaRow(ctk.CTkFrame):
-    def __init__(self, master, parent_frame, molecule_names, df,group_name_entry):
+    def __init__(self, master, parent_frame, molecule_names, df,group_name_entry, parent_class):
         super().__init__(master, )
 
         self.parent_frame = parent_frame
         self.molecule_names = molecule_names
         self.df = df
         self.group_name_entry = group_name_entry
+        self.parent_class = parent_class
 
         self.add_criteria_row()
 
@@ -55,6 +56,11 @@ class CriteriaRow(ctk.CTkFrame):
             self.value_select.destroy()
         if  self.selected_values_label:
             self.selected_values_label.destroy()
+        # Remove the criteria row from the parent's list
+        for group_id, criteria_list in self.parent_class.criteria_rows.items():
+            if self in criteria_list:
+                self.parent_class.criteria_rows[group_id].remove(self)
+                break
 
     def update_criteria_dropdown(self, choice):
         if not self.group_name_entry.get():
@@ -75,7 +81,6 @@ class CriteriaRow(ctk.CTkFrame):
 
         self.criteria_select.configure(values=criteria_options)
     
-
     def update_value_input_type(self, criteria):
         if self.value_select:
             self.value_select.destroy()
@@ -120,14 +125,20 @@ class CriteriaRow(ctk.CTkFrame):
                     value = None
             
             return {
-                "criteria": selected_criteria,
-                "column": selected_column,
-                "value": value
+                "criteria": selected_criteria if selected_criteria != 'Select' else None,
+                "column": selected_column if selected_column != 'Select' else None,
+                "value": value if value else []
             }
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while retrieving selected criteria: {e}")
-            return None
+            return {
+            "criteria": "None",
+            "column": "None",
+            "value": []
+        }
         
     # Method to update the data rows label
     def update_data_rows_label(self, num_rows):
-        self.data_rows_label.configure(text=str(num_rows))
+        if self.data_rows_label and self.data_rows_label.winfo_exists():
+            self.data_rows_label.configure(text=str(num_rows))
+        # self.data_rows_label.configure(text=str(num_rows))
