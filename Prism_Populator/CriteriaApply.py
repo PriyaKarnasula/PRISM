@@ -108,6 +108,7 @@ class CriteriaApplication:
 
             if group_info["group_name"]:
                 self.parent.filtered_dfs.append((group_info["group_name"], filtered_df))
+                # print(self.parent.filtered_dfs)
                 print(f"Filtered DataFrame for group {group_info['group_name']}:\n", filtered_df)
 
         print("Filtered DataFrames created successfully.")

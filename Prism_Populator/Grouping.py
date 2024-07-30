@@ -5,7 +5,8 @@ import threading
 from tkinter import messagebox
 from CriteriaRow import CriteriaRow  # Import the CriteriaRow class
 from CriteriaApply import CriteriaApplication  # Import the new class
-from MultiselectDropdown import DropDownMulitSelect
+from GraphPreview import PreviewGraph  # Import the new class
+from MultiselectDropdownMolecules import DropDownMulitSelectMolecules
 import os
 
 class Groups(ctk.CTkFrame):
@@ -32,7 +33,9 @@ class Groups(ctk.CTkFrame):
         self.df = None
         self.criteria_rows = {}  # Dictionary to store CriteriaRow instances by group ID or name
         self.criteria_application = CriteriaApplication(self)
+        self.previewing_graph = PreviewGraph(self)   # Initialize PreviewGraph instance
         self.selected_molecules = []
+        self.unique_molecule_names = []
 
         self.file_frame = ctk.CTkFrame(nav_frame)
         self.file_frame.grid(row=0,column=0, padx=50, pady=0)
@@ -83,12 +86,15 @@ class Groups(ctk.CTkFrame):
         self.apply_btn.grid(row=0, column=0, padx=5, pady=5)
 
         self.preview_graph_frame = ctk.CTkFrame(nav_frame)
-        self.preview_graph_frame.grid(row=3, column=1, padx=0, pady=5)
-        self.preview_graph_btn = ctk.CTkButton(self.preview_graph_frame, text="Preview Graph", command=self.export_to_excel) #change command later
-        self.preview_graph_btn.grid(row=0, column=0, padx=5, pady=5)
+        self.preview_graph_frame.grid(row=3, column=2, padx=0, pady=5)
+        self.graph_molecule_dropdown = ctk.CTkComboBox(self.preview_graph_frame, values = self.unique_molecule_names)
+        self.graph_molecule_dropdown.set('Select Molecule')
+        self.graph_molecule_dropdown.grid(row = 0, column =0, padx=5, pady=5)        
+        self.preview_graph_btn = ctk.CTkButton(self.preview_graph_frame, text="Preview Graph", command=self.previewing_graph.preview_graph) #change command later
+        self.preview_graph_btn.grid(row=0, column=1, padx=5, pady=5)
 
         self.csv_export_frame = ctk.CTkFrame(nav_frame)
-        self.csv_export_frame.grid(row=3, column=2, padx=0, pady=5)
+        self.csv_export_frame.grid(row=3, column=3, padx=0, pady=5)
         self.csv_export_btn = ctk.CTkButton(self.csv_export_frame, text="Export to Excel", command=self.export_to_excel) #change command later
         self.csv_export_btn.grid(row=0, column=0, padx=5, pady=5)
         self.prism_export_btn = ctk.CTkButton(self.csv_export_frame, text="Export to PRISM", command=self.export_to_excel) #change command later
@@ -135,13 +141,20 @@ class Groups(ctk.CTkFrame):
             messagebox.showerror("Error", "Please select a value for 'Molecules start from'.")
             return
 
+        self.graph_molecule_dropdown.set('Select Molecule')
+
         # Index of the selected molecule
         start_index = self.df.columns.get_loc(selected_molecule)
 
         # Get all columns from the selected molecule to the end
-        options_selected = self.df.columns[start_index:].tolist()
-        options_selected = [str(item) for item in options_selected]
-        DropDownMulitSelect(self.compounds_frame, options_selected, self.selected_values_label)
+        options = self.df.columns[start_index:].tolist()
+        options = [str(item) for item in options]
+        # self.update_unique_molecule_names()
+        DropDownMulitSelectMolecules(self, self.compounds_frame, options, self.selected_values_label)
+
+    def update_graph_molecule_dropdown(self, unique_molecule_names):
+        self.unique_molecule_names = unique_molecule_names
+        self.graph_molecule_dropdown.configure(values=self.unique_molecule_names)
 
     def create_groups(self, event=None):
 
@@ -205,6 +218,14 @@ class Groups(ctk.CTkFrame):
             messagebox.showerror("Error", "Maximum number of groups reached.")
             return
         new_group_number = self.total_groups_created + 1  # Increment the group number correctly
+
+        # Handling the existing graph
+        if hasattr(self.previewing_graph, 'canvas') and self.previewing_graph.canvas:
+            widget = self.previewing_graph.canvas.get_tk_widget()
+            if widget.winfo_exists():
+                widget.destroy()
+            self.previewing_graph.canvas = None  # Clear the reference
+
         self.total_groups_created += 1  # Update total groups created
         group_container_frame = ctk.CTkFrame(self.parent_group_frame, border_width=2, corner_radius=10)
         self.create_group(new_group_number, group_container_frame)
@@ -219,6 +240,12 @@ class Groups(ctk.CTkFrame):
         self.update_group_dropdown()  # Update the dropdown when a new group is created
 
     def delete_group(self, group_frame):
+        # Handling the existing graph
+        if hasattr(self.previewing_graph, 'canvas') and self.previewing_graph.canvas:
+            widget = self.previewing_graph.canvas.get_tk_widget()
+            if widget.winfo_exists():
+                widget.destroy()
+            self.previewing_graph.canvas = None  # Clear the reference
         group_frame.destroy()
         self.group_frame.remove(group_frame)
         self.total_groups_created -=1
@@ -229,6 +256,12 @@ class Groups(ctk.CTkFrame):
         self.group_number_dropdown.set(str(current_num_groups))        
 
     def add_criteria(self, group_number, criteria_frame, individual_group_name_entry):
+        # Handling the existing graph
+        if hasattr(self.previewing_graph, 'canvas') and self.previewing_graph.canvas:
+            widget = self.previewing_graph.canvas.get_tk_widget()
+            if widget.winfo_exists():
+                widget.destroy()
+            self.previewing_graph.canvas = None  # Clear the reference
         criteria_row_instance = CriteriaRow(self, criteria_frame, self.molecule_names, self.df,individual_group_name_entry,  parent_class=self) 
         if group_number not in self.criteria_rows:
             self.criteria_rows[group_number] = []

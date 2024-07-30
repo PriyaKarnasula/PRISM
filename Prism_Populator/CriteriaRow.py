@@ -2,6 +2,7 @@ import customtkinter as ctk
 import pandas as pd
 from MultiselectDropdown import DropDownMulitSelect
 from tkinter import messagebox
+from GraphPreview import PreviewGraph  # Import the new class
 
 class CriteriaRow(ctk.CTkFrame):
     def __init__(self, master, parent_frame, molecule_names, df,group_name_entry, parent_class):
@@ -12,6 +13,7 @@ class CriteriaRow(ctk.CTkFrame):
         self.df = df
         self.group_name_entry = group_name_entry
         self.parent_class = parent_class
+        self.previewing_graph = PreviewGraph(self.master)   # Initialize PreviewGraph instance
 
         self.add_criteria_row()
 
@@ -61,6 +63,12 @@ class CriteriaRow(ctk.CTkFrame):
             if self in criteria_list:
                 self.parent_class.criteria_rows[group_id].remove(self)
                 break
+        # Handling the existing graph
+        if hasattr(self.master.previewing_graph, 'canvas') and self.master.previewing_graph.canvas:
+            widget = self.master.previewing_graph.canvas.get_tk_widget()
+            if widget.winfo_exists():
+                widget.destroy()
+            self.master.previewing_graph.canvas = None  # Clear the reference
 
     def update_criteria_dropdown(self, choice):
         if not self.group_name_entry.get():
