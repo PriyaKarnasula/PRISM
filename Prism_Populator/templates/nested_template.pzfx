@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GraphPadPrismFile xmlns="http://graphpad.com/prism/Prism.htm" PrismXMLVersion="5.00">
+<Created>
+<OriginalVersion CreatedByProgram="GraphPad Prism" CreatedByVersion="10.2.3.403" Login="ghari" DateTime="2024-07-31T09:49:07-05:00"/>
+</Created>
+<InfoSequence>
+<Ref ID="Info0" Selected="1"/>
+</InfoSequence>
+<Info ID="Info0">
+<Title>Project info 1</Title>
+<Notes/>
+<Constant><Name>Experiment Date</Name><Value>2024-07-31</Value></Constant>
+<Constant><Name>Experiment ID</Name><Value/></Constant>
+<Constant><Name>Notebook ID</Name><Value/></Constant>
+<Constant><Name>Project</Name><Value/></Constant>
+<Constant><Name>Experimenter</Name><Value/></Constant>
+<Constant><Name>Protocol</Name><Value/></Constant>
+</Info>
+
+<TableSequence>
+<Ref ID="Table0" Selected="1"/>
+</TableSequence>
+<Table ID="Table0" XFormat="none" YFormat="replicates" Replicates="3" TableType="TwoWay" ExtTableType="Nested" EVFormat="AsteriskAfterNumber">
+<Title>Nested: t test</Title>
+<FloatingNote ID="Sticky0" Auto="0" Color="Blue" Left="750" Top="245" Width="422" Height="276" ScrWidth="3840" ScrHeight="1178" ScrDPI="96">
+<WebLink Flags="0" ToolTip="https://www.amazon.com/Designing-Experiments-Analyzing-Data-Perspective/dp/1138892289" URL="https://www.amazon.com/Designing-Experiments-Analyzing-Data-Perspective/dp/1138892289">
+Maxwell and Delaney on amazon.com
+</WebLink>
+
+<B><Font Size="10" Color="#000000" Face="Arial">Data source</Font></B>
+<Font Size="10" Color="#000000" Face="Arial"><BR/><BR/>Data from Table 16.4 of Maxwell and Delaney,   </Font>
+<I><Font Size="10" Color="#000000" Face="Arial">Designing  Experiments and Analyzing Data</Font></I>
+<Font Size="10" Color="#000000" Face="Arial">, second edition. The </Font>
+<I><Font Size="10" Color="#000000" Face="Arial">cog </Font></I>
+<Font Size="10" Color="#000000" Face="Arial">and </Font>
+<I><Font Size="10" Color="#000000" Face="Arial">skill </Font></I>
+<Font Size="10" Color="#000000" Face="Arial">variables in that table are not used for this example. We renamed "conditions" in the example to "Teaching method".<BR/><BR/>The table in the book assigns all subjects, from both treatments to rooms 1-3, but the analysis in the book assumes three rooms for the first treatment and three different rooms for the second treatment. Accordingly, we assign students to rooms 1-6. <BR/><BR/>The results that correspond to our nested t test are shown in Table 16.6. </Font>
+</FloatingNote>
+
+<FloatingNote ID="Sticky1" Auto="0" Color="Yellow" Left="275" Top="243" Width="472" Height="429" ScrWidth="3840" ScrHeight="1178" ScrDPI="96">
+<WebLink Flags="0" ToolTip="@help:stat_how-to-nested-t-test" URL="@help:stat_how-to-nested-t-test">
+Step by step instructions for performing a nested t test
+</WebLink>
+
+<B><Font Size="10" Color="#000000" Face="Arial">How the data are organized</Font></B>
+<Font Size="10" Color="#000000" Face="Arial"><BR/>The data are the results of a test for inductive reasoning given to  students taught in two different methods, defined by the dataset columns.<BR/><BR/>Each teaching method was used in three classrooms, each defined by a subcolumn. For this example, each classroom had from 4 to 6 students. <BR/><BR/>Note that the related values (students in same classroom taught by the same method) are stacked into a subcolumn.</Font>
+<B><Font Size="11" Color="#000000" Face="Arial"><BR/><BR/>The goals</Font></B>
+<Font Size="11" Color="#000000" Face="Arial"><BR/>- To determine if the differences between the two group means is greater than you'd expect to see by chance.</Font>
+<B><Font Size="11" Color="#000000" Face="Arial"><BR/>- </Font></B>
+<Font Size="11" Color="#000000" Face="Arial">To determine the 95% confidence interval for the difference between the two means.<BR/>- Do these calculations accounting for the fact that students are nested within classrooms. </Font>
+<B><Font Size="10" Color="#000000" Face="Arial"><BR/><BR/>Step by step</Font></B>
+<Font Size="10" Color="#000000" Face="Arial"><BR/>1. Click the Analyze button.<BR/>2. Choose Nested t test from the list of nested analyses.<BR/>3. Accept all the default choices and click OK.</Font>
+</FloatingNote>
+
+<SubColumnTitles OwnSet="1">
+<Subcolumn>
+<d><TextAlign align="Center">Room 1</TextAlign></d>
+<d><TextAlign align="Center">Room 4</TextAlign></d>
+</Subcolumn>
+<Subcolumn>
+<d><TextAlign align="Center">Room 2</TextAlign></d>
+<d><TextAlign align="Center">Room 5</TextAlign></d>
+</Subcolumn>
+<Subcolumn>
+<d><TextAlign align="Center">Room 3</TextAlign></d>
+<d><TextAlign align="Center">Room 6</TextAlign></d>
+</Subcolumn>
+</SubColumnTitles>
+<YColumn Width="243" Decimals="0" Subcolumns="3">
+<Title>Teaching method  A</Title>
+<Subcolumn>
+<d>21</d>
+<d>26</d>
+<d>33</d>
+<d>22</d>
+<d/>
+<d/>
+</Subcolumn>
+<Subcolumn>
+<d>18</d>
+<d>25</d>
+<d>26</d>
+<d>24</d>
+<d>21</d>
+<d>25</d>
+</Subcolumn>
+<Subcolumn>
+<d>35</d>
+<d>28</d>
+<d>32</d>
+<d>36</d>
+<d>38</d>
+<d/>
+</Subcolumn>
+</YColumn>
+<YColumn Width="243" Decimals="0" Subcolumns="3">
+<Title>Teaching method B</Title>
+<Subcolumn>
+<d>26</d>
+<d>34</d>
+<d>27</d>
+<d/>
+<d/>
+<d/>
+</Subcolumn>
+<Subcolumn>
+<d>38</d>
+<d>44</d>
+<d>34</d>
+<d>45</d>
+<d>38</d>
+<d/>
+</Subcolumn>
+<Subcolumn>
+<d>31</d>
+<d>41</d>
+<d>34</d>
+<d>35</d>
+<d>38</d>
+<d>46</d>
+</Subcolumn>
+</YColumn>
+</Table>
+
+<!--Analyses, graphs and layouts as compressed binary. Don't edit this part of the file.-->
+
+<Template xmlns:dt="urn:schemas-microsoft-com:datatypes" dt:dt="bin.base64">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
+dw==</Template></GraphPadPrismFile>

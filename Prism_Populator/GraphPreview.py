@@ -41,7 +41,8 @@ class PreviewGraph:
 
         # Prepare data for plotting
         plot_data = pd.DataFrame(mean_values)
-
+        print(plot_data)
+        
         # Handling the existing graph
         if hasattr(self, 'canvas') and self.canvas:
             widget = self.canvas.get_tk_widget()
@@ -50,13 +51,17 @@ class PreviewGraph:
             self.canvas = None  # Clear the reference
 
         # Plotting the data
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(10, 5))  # Adjust figure size
         plot_data.plot(kind='bar', ax=ax)
 
         ax.set_xlabel('Molecules')
         ax.set_ylabel('Mean Values')
         ax.set_title(f'Graph Preview for {selected_molecule}')
 
+        # Rotate x-axis labels and adjust layout
+        plt.xticks(rotation=45, ha='right')
+        fig.tight_layout()
+        
         # Embed the plot in the Tkinter GUI
         self.canvas = FigureCanvasTkAgg(fig, master=self.parent.parent_group_frame)
         self.canvas.draw()

@@ -6,6 +6,7 @@ from tkinter import messagebox
 from CriteriaRow import CriteriaRow  # Import the CriteriaRow class
 from CriteriaApply import CriteriaApplication  # Import the new class
 from GraphPreview import PreviewGraph  # Import the new class
+from PrismExport import ExportPrism  # Import the new class
 from MultiselectDropdownMolecules import DropDownMulitSelectMolecules
 import os
 
@@ -34,8 +35,11 @@ class Groups(ctk.CTkFrame):
         self.criteria_rows = {}  # Dictionary to store CriteriaRow instances by group ID or name
         self.criteria_application = CriteriaApplication(self)
         self.previewing_graph = PreviewGraph(self)   # Initialize PreviewGraph instance
+        self.export_to_prism = ExportPrism(self)   # Initialize PreviewGraph instance
         self.selected_molecules = []
         self.unique_molecule_names = []
+        self.filtered_dfs = {}  # Initialize filtered_dfs here
+        self.current_num_groups = 0  # Initialize current_num_groups here
 
         self.file_frame = ctk.CTkFrame(nav_frame)
         self.file_frame.grid(row=0,column=0, padx=50, pady=0)
@@ -62,7 +66,7 @@ class Groups(ctk.CTkFrame):
         create_groups_btn.grid(row=0, column=4, padx=5, pady=5)
 
         self.compounds_frame = ctk.CTkFrame(nav_frame)
-        self.compounds_frame.grid(row =0, column = 5, sticky='e', padx=10)
+        self.compounds_frame.grid(row =0, column = 4, sticky='e', padx=10)
         self.compounds_label = ctk.CTkLabel(self.compounds_frame, text = 'Molecules')
         self.compounds_label.grid(row = 0, column = 0, padx =10, sticky='e')
         self.compound_select = ctk.CTkButton(self.compounds_frame, text="Click to Select", command=self.open_compounds_dropdown)
@@ -93,12 +97,18 @@ class Groups(ctk.CTkFrame):
         self.preview_graph_btn = ctk.CTkButton(self.preview_graph_frame, text="Preview Graph", command=self.previewing_graph.preview_graph) #change command later
         self.preview_graph_btn.grid(row=0, column=1, padx=5, pady=5)
 
-        self.csv_export_frame = ctk.CTkFrame(nav_frame)
-        self.csv_export_frame.grid(row=3, column=3, padx=0, pady=5)
-        self.csv_export_btn = ctk.CTkButton(self.csv_export_frame, text="Export to Excel", command=self.export_to_excel) #change command later
-        self.csv_export_btn.grid(row=0, column=0, padx=5, pady=5)
-        self.prism_export_btn = ctk.CTkButton(self.csv_export_frame, text="Export to PRISM", command=self.export_to_excel) #change command later
+        self.prism_export_frame = ctk.CTkFrame(nav_frame)
+        self.prism_export_frame.grid(row=3, column=3, padx=0, pady=5)
+        self.prism_export_dropdown = ctk.CTkComboBox(self.prism_export_frame, values = ['Columnar','Nested']) #change command later
+        self.prism_export_dropdown.grid(row=0, column=0, padx=5, pady=5)
+        self.prism_export_dropdown.set('Select')
+        self.prism_export_btn = ctk.CTkButton(self.prism_export_frame, text="Export to PRISM", command=self.export_to_prism.prism_export) #change command later
         self.prism_export_btn.grid(row=0, column=1, padx=5, pady=5)
+
+        self.excel_export_frame = ctk.CTkFrame(nav_frame)
+        self.excel_export_frame.grid(row=3, column=4, padx=0, pady=5)
+        self.excel_export_btn = ctk.CTkButton(self.excel_export_frame, text="Export to Excel", command=self.export_to_excel) #change command later
+        self.excel_export_btn.grid(row=0, column=0, padx=5, pady=5)
 
     def open_file(self):
         self.filepath = filedialog.askopenfilename(
@@ -168,11 +178,14 @@ class Groups(ctk.CTkFrame):
             messagebox.showerror("Error", "Please select a value for 'Molecules start from'.")
             return
         
+        # Destroy existing groups
+        for child in self.parent_group_frame.winfo_children():
+            child.destroy()
+        self.criteria_rows.clear() 
+
         selected_value = self.group_number_dropdown.get()
         if selected_value.isdigit():  # Check if it's a valid number
             num_groups = int(selected_value)
-            for widget in self.parent_group_frame.winfo_children():
-                widget.destroy()
 
             self.group_frame = []
             self.total_groups_created = 0  # Reset total groups created
@@ -252,8 +265,8 @@ class Groups(ctk.CTkFrame):
         self.update_group_dropdown()
 
     def update_group_dropdown(self):
-        current_num_groups = self.total_groups_created 
-        self.group_number_dropdown.set(str(current_num_groups))        
+        self.current_num_groups = self.total_groups_created 
+        self.group_number_dropdown.set(str(self.current_num_groups))        
 
     def add_criteria(self, group_number, criteria_frame, individual_group_name_entry):
         # Handling the existing graph
