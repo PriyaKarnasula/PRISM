@@ -3,10 +3,10 @@ import pandas as pd
 from tkinter import filedialog
 import threading
 from tkinter import messagebox
-from CriteriaRow import CriteriaRow  # Import the CriteriaRow class
-from CriteriaApply import CriteriaApplication  # Import the new class
-from GraphPreview import PreviewGraph  # Import the new class
-from PrismExport import ExportPrism  # Import the new class
+from CriteriaRow import CriteriaRow  
+from CriteriaApply import CriteriaApplication  
+from GraphPreview import PreviewGraph  
+from PrismExport import ExportPrism  
 from MultiselectDropdownMolecules import DropDownMulitSelectMolecules
 import os
 
@@ -213,7 +213,7 @@ class Groups(ctk.CTkFrame):
         individual_group_number_label.grid(row = 0, column = 0, padx = 10, pady = 5, sticky = 'w')
         individual_group_name_entry = ctk.CTkEntry(individual_group_number_frame)
         individual_group_name_entry.grid(row=0, column=1, padx = 20, pady = 5)
-        delete_group_btn = ctk.CTkButton(individual_group_number_frame, text="Delete Group", fg_color='transparent', border_width = 1, command=lambda gf=container_frame: self.delete_group(gf))
+        delete_group_btn = ctk.CTkButton(individual_group_number_frame, text="Delete Group", fg_color='transparent', border_width = 1, command=lambda gf=container_frame, gn=group_number : self.delete_group(gf, gn))
         delete_group_btn.grid(row=0, column=2, padx=5, pady=5)
 
         self.criteria_frame = ctk.CTkFrame(container_frame)
@@ -229,7 +229,12 @@ class Groups(ctk.CTkFrame):
         if self.total_groups_created == 15:
             messagebox.showerror("Error", "Maximum number of groups reached.")
             return
-        new_group_number = self.total_groups_created + 1  # Increment the group number correctly
+        # Find the maximum existing group number
+        existing_group_numbers = [key for key in self.criteria_rows.keys()]
+        if existing_group_numbers:
+            new_group_number = max(existing_group_numbers) + 1
+        else:
+            new_group_number = 1
 
         # Handling the existing graph
         if hasattr(self.previewing_graph, 'canvas') and self.previewing_graph.canvas:
@@ -251,15 +256,24 @@ class Groups(ctk.CTkFrame):
         self.group_frame.append(group_container_frame)
         self.update_group_dropdown()  # Update the dropdown when a new group is created
 
-    def delete_group(self, group_frame):
+    def delete_group(self, group_frame, group_number):
         # Handling the existing graph
         if hasattr(self.previewing_graph, 'canvas') and self.previewing_graph.canvas:
             widget = self.previewing_graph.canvas.get_tk_widget()
             if widget.winfo_exists():
                 widget.destroy()
             self.previewing_graph.canvas = None  # Clear the reference
+
         group_frame.destroy()
         self.group_frame.remove(group_frame)
+        # Remove criteria for the deleted group
+        if group_number in self.criteria_rows:
+            del self.criteria_rows[group_number]
+
+        # Re-arrange the remaining groups
+        for i, frame in enumerate(self.group_frame):
+            frame.grid(row=i, column=0, padx=10, pady=5)
+
         self.total_groups_created -=1
         self.update_group_dropdown()
 

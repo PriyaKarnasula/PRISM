@@ -30,6 +30,13 @@ class CriteriaApplication:
         selected_molecules = [m.strip() for m in selected_molecules.split("\n")  if m.strip()]
 
         for group_id, group_frame in enumerate(self.parent.group_frame):
+            # Adjusting group IDs to match the existing keys in criteria_rows
+            actual_group_ids = list(self.parent.criteria_rows.keys())
+            if group_id >= len(actual_group_ids):
+                continue
+
+            actual_group_id = actual_group_ids[group_id]
+    
             group_info = {"group_name": None, "criteria": []}
             filtered_df = self.parent.df.copy()
 
@@ -41,9 +48,8 @@ class CriteriaApplication:
                             group_info["group_name"] = inner_child.get()
 
             # Get criteria for the current group and apply them
-            if group_id + 1 in self.parent.criteria_rows:
-                valid_criteria_rows = [] # List to hold valid criteria rows and remove deleted crieria
-                for criteria_row in self.parent.criteria_rows[group_id + 1]:
+            if actual_group_id in self.parent.criteria_rows:
+                for criteria_row in self.parent.criteria_rows[actual_group_id]:
                     if criteria_row is None:
                         continue
                     if criteria_row and criteria_row.winfo_exists():
@@ -120,8 +126,6 @@ class CriteriaApplication:
         self.group_names_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 10), pady=(10, 10))
         ctk.CTkLabel(self.group_names_frame, text="Group Name").grid(row=0, column=0, padx=10, pady=10)
         ctk.CTkLabel(self.group_names_frame, text="Number of Rows").grid(row=0, column=1, padx=10, pady=10)
-        # ctk.CTkLabel(self.group_names_frame, text="Order").grid(row=0, column=2, padx=10, pady=10)
         for idx, group_info in enumerate(group_data):
             ctk.CTkLabel(self.group_names_frame, text=group_info["group_name"]).grid(row=idx+1, column=0, padx=10, pady=10)
             ctk.CTkLabel(self.group_names_frame, text=str(self.parent.filtered_dfs[idx][1].shape[0])).grid(row=idx+1, column=1, padx=10, pady=10)        
-            # ctk.CTkComboBox(self.group_names_frame, values=[str(i) for i in range(self.parent.current_num_groups)]).grid(row=idx+1, column=2, padx=10, pady=10)
