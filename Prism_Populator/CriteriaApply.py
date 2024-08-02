@@ -120,6 +120,8 @@ class CriteriaApplication:
         self.group_names_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 10), pady=(10, 10))
         ctk.CTkLabel(self.group_names_frame, text="Group Name").grid(row=0, column=0, padx=10, pady=10)
         ctk.CTkLabel(self.group_names_frame, text="Number of Rows").grid(row=0, column=1, padx=10, pady=10)
+        # ctk.CTkLabel(self.group_names_frame, text="Order").grid(row=0, column=2, padx=10, pady=10)
         for idx, group_info in enumerate(group_data):
             ctk.CTkLabel(self.group_names_frame, text=group_info["group_name"]).grid(row=idx+1, column=0, padx=10, pady=10)
             ctk.CTkLabel(self.group_names_frame, text=str(self.parent.filtered_dfs[idx][1].shape[0])).grid(row=idx+1, column=1, padx=10, pady=10)        
+            # ctk.CTkComboBox(self.group_names_frame, values=[str(i) for i in range(self.parent.current_num_groups)]).grid(row=idx+1, column=2, padx=10, pady=10)

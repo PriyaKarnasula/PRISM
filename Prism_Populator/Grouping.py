@@ -159,7 +159,6 @@ class Groups(ctk.CTkFrame):
         # Get all columns from the selected molecule to the end
         options = self.df.columns[start_index:].tolist()
         options = [str(item) for item in options]
-        # self.update_unique_molecule_names()
         DropDownMulitSelectMolecules(self, self.compounds_frame, options, self.selected_values_label)
 
     def update_graph_molecule_dropdown(self, unique_molecule_names):
