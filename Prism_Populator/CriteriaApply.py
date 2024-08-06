@@ -123,9 +123,10 @@ class CriteriaApplication:
 
         # Frame for displaying group names
         self.group_names_frame = ctk.CTkFrame(self.parent.parent_group_frame)
+        # self.group_names_frame.grid(row=self.parent.total_groups_created + 1, column=1, sticky="nsew", padx=(10, 10), pady=(10, 10))
         self.group_names_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 10), pady=(10, 10))
         ctk.CTkLabel(self.group_names_frame, text="Group Name").grid(row=0, column=0, padx=10, pady=10)
         ctk.CTkLabel(self.group_names_frame, text="Number of Rows").grid(row=0, column=1, padx=10, pady=10)
         for idx, group_info in enumerate(group_data):
-            ctk.CTkLabel(self.group_names_frame, text=group_info["group_name"]).grid(row=idx+1, column=0, padx=10, pady=10)
-            ctk.CTkLabel(self.group_names_frame, text=str(self.parent.filtered_dfs[idx][1].shape[0])).grid(row=idx+1, column=1, padx=10, pady=10)        
+            ctk.CTkLabel(self.group_names_frame, text=group_info["group_name"]).grid(row=idx+1, column=0, padx=1, pady=1)
+            ctk.CTkLabel(self.group_names_frame, text=str(self.parent.filtered_dfs[idx][1].shape[0])).grid(row=idx+1, column=1, padx=1, pady=1)        

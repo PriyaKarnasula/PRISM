@@ -7,7 +7,7 @@ from tkinter import filedialog
 import os
 from PrismNestedTable import NestedTable  # Import your NestedTable class here
 from PrismColumnTable import ColumnTable  # Import your ColumnTable class here
-import pickle
+import copy
 
 class ExportPrism:
     def __init__(self, parent):
@@ -23,6 +23,8 @@ class ExportPrism:
             return
         
         print(self.parent.filtered_dfs)
+
+        self.prism_export_df = copy.deepcopy(self.parent.filtered_dfs)
         
         prism_type = self.parent.prism_export_dropdown.get()
 
@@ -34,7 +36,7 @@ class ExportPrism:
     def export_nested_table(self):
         input_prism_template = "templates/nested_template.pzfx"
         nested_dict = {}
-        for group_name, df in self.parent.filtered_dfs:
+        for group_name, df in self.prism_export_df:
             molecule_names = self.extract_molecule_names(df)
             for molecule in molecule_names:
                 if molecule not in nested_dict:
@@ -56,13 +58,13 @@ class ExportPrism:
 
     def export_columnar_table(self):
         # Automatically pick the correct template based on the number of groups
-        num_groups = len(self.parent.filtered_dfs)
+        num_groups = len(self.prism_export_df)
         print(f"Number of groups: {num_groups}")
         template_folder = "templates"
         input_prism_template = os.path.join(template_folder, f"group{num_groups}.pzfx")
 
         molecule_dfs = {}
-        all_group_dfs = {group_name: df for group_name, df in self.parent.filtered_dfs}
+        all_group_dfs = {group_name: df for group_name, df in self.prism_export_df}
         print(f"Reformatting data for Prism: {all_group_dfs}")
 
         molecule_dfs = self.prepare_dict_for_columnar_export(all_group_dfs)
@@ -109,7 +111,7 @@ class ExportPrism:
             lst_df.append(group_df)
         combined_df = pd.concat(lst_df, axis=1)
 
-        # case pyruvicacid_soemthing_m0####Group1 -> pyruvicacid_soemthing_m0 ->  [pyruvicacid, soemthing, m0] -> [pyruvicacid, soemthing] -> pyruvicacid_soemthing
+        # case pyruvicacid_something_m0####Group1 -> pyruvicacid_something_m0 ->  [pyruvicacid, soemthing, m0] -> [pyruvicacid, soemthing] -> pyruvicacid_soemthing
         # unique_tables are the molecule names
         unique_tables = list(set(['_'.join(col.split("####")[0].split('_')[:-1]) for col in combined_df.columns]))
 
