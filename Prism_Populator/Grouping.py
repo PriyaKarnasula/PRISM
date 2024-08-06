@@ -200,9 +200,8 @@ class Groups(ctk.CTkFrame):
                 group_container_frame.rowconfigure(1, weight =1)
                 self.group_frame.append(group_container_frame)
                 self.create_group(i + 1, group_container_frame)
-                self.total_groups_created += 1  # Increment the total groups created
+                self.total_groups_created += 1 
         else:
-            # Handles the case where 'Select' or an invalid string is selected
             pass
 
     def create_group(self, group_number, container_frame):
@@ -214,9 +213,6 @@ class Groups(ctk.CTkFrame):
         individual_group_number_label.grid(row = 0, column = 0, padx = 10, pady = 5, sticky = 'w')
         individual_group_name_entry = ctk.CTkEntry(individual_group_number_frame)
         individual_group_name_entry.grid(row=0, column=1, padx = 20, pady = 5)
-        # individual_group_name = individual_group_name_entry.get()
-        # delete_group_btn = ctk.CTkButton(individual_group_number_frame, text="Delete Group", fg_color='transparent', border_width = 1, command=lambda gf=container_frame, gn=group_number : self.delete_group(gf, gn))
-        # delete_group_btn.grid(row=0, column=2, padx=5, pady=5)
 
         move_up_btn = ctk.CTkButton(individual_group_number_frame, text="Move Up", fg_color='transparent', border_width=1, command=lambda gname = individual_group_name_entry: self.move_group_up(gname))
         move_up_btn.grid(row=0, column=2, padx=5, pady=5)
@@ -230,8 +226,6 @@ class Groups(ctk.CTkFrame):
         self.add_criteria(group_number, self.criteria_frame,individual_group_name_entry)
         add_criteria_btn = ctk.CTkButton(container_frame, text="Add Criteria",fg_color='transparent', border_width = 1, command=lambda cf=self.criteria_frame: self.add_criteria(group_number, cf,individual_group_name_entry))
         add_criteria_btn.grid(row=2, column=0, padx=10, pady=5, sticky = 'w')
-
-        # self.group_order.append(individual_group_name)
 
     def add_group(self):
         if not hasattr(self, 'group_frame') or not self.group_frame:
@@ -257,7 +251,7 @@ class Groups(ctk.CTkFrame):
         self.total_groups_created += 1  # Update total groups created
         group_container_frame = ctk.CTkFrame(self.parent_group_frame, border_width=2, corner_radius=10)
         self.create_group(new_group_number, group_container_frame)
-        group_container_frame.grid(row =new_group_number, column =0, padx = 10, pady = 5)
+        group_container_frame.grid(row = self.total_groups_created, column =0, padx = 10, pady = 5)
         group_container_frame.grid_columnconfigure(0, weight =1)
         group_container_frame.grid_rowconfigure(0, weight =1)
         group_container_frame.columnconfigure(0, weight =1)
@@ -277,18 +271,28 @@ class Groups(ctk.CTkFrame):
 
         group_frame.destroy()
         self.group_frame.remove(group_frame)
+
+        # Remove criteria for the deleted group
+        # group_id_to_remove = None
+        # print(group_frame)
+        # for group_id, data in self.criteria_rows.items():
+        #     print(group_id, data)
+        #     if data["frame"] == group_frame:
+        #         group_id_to_remove = group_id
+        #         break
+
+        # if group_id_to_remove is not None:
+        #     del self.criteria_rows[group_id_to_remove]
+
         # Remove criteria for the deleted group
         if group_number in self.criteria_rows:
             del self.criteria_rows[group_number]
 
-        # Re-arrange the remaining groups
-        for i, frame in enumerate(self.group_frame):
-            frame.grid(row=i, column=0, padx=10, pady=5)
+        # Refresh group positions
+        self.refresh_group_positions()
 
-        self.total_groups_created -=1
+        self.total_groups_created -= 1
         self.update_group_dropdown()
-
-        self.group_order.remove(group_name)
 
     def update_group_dropdown(self):
         self.current_num_groups = self.total_groups_created 
@@ -338,31 +342,45 @@ class Groups(ctk.CTkFrame):
         print(f"Selected criteria: {selected_criteria}")    
 
     def move_group_up(self, group_name_entry):
+        # Handling the existing graph
+        if hasattr(self.previewing_graph, 'canvas') and self.previewing_graph.canvas:
+            widget = self.previewing_graph.canvas.get_tk_widget()
+            if widget.winfo_exists():
+                widget.destroy()
+            self.previewing_graph.canvas = None  # Clear the reference
+
         selected_group_name = group_name_entry.get()
         self.get_group_names()
-        # print(group_names)
         print(selected_group_name)
         index = self.group_order.index(selected_group_name)
-        # print(index)
         if index > 0:
             print(self.group_order)
             self.group_order[index], self.group_order[index - 1] = self.group_order[index - 1], self.group_order[index]
             self.group_frame[index], self.group_frame[index - 1] = self.group_frame[index - 1], self.group_frame[index]
             print(self.group_order)
+            # Update criteria_rows to reflect new order
+            self.update_criteria_rows(index, index - 1)
             self.refresh_group_positions()
 
     def move_group_down(self, group_name_entry):
+        # Handling the existing graph
+        if hasattr(self.previewing_graph, 'canvas') and self.previewing_graph.canvas:
+            widget = self.previewing_graph.canvas.get_tk_widget()
+            if widget.winfo_exists():
+                widget.destroy()
+            self.previewing_graph.canvas = None  # Clear the reference
+
         selected_group_name = group_name_entry.get()
         self.get_group_names() 
-        # print(group_names)
         print(selected_group_name)
         index = self.group_order.index(selected_group_name)
-        # print(index)
         if index < len(self.group_order) - 1:
             print(self.group_order)
             self.group_order[index], self.group_order[index + 1] = self.group_order[index + 1], self.group_order[index]
             self.group_frame[index], self.group_frame[index + 1] = self.group_frame[index + 1], self.group_frame[index]
             print(self.group_order) 
+            # Update criteria_rows to reflect new order
+            self.update_criteria_rows(index, index + 1)
             self.refresh_group_positions()
 
     def refresh_group_positions(self):
@@ -374,10 +392,18 @@ class Groups(ctk.CTkFrame):
             self.group_order = []
         for group_id, group_frame in enumerate(self.group_frame):
             group_info = {"group_name": None}
-            # Find group name entry and criteria frames within the group frame
+            # Find group names within the group frame
             for child in group_frame.winfo_children():
                 if isinstance(child, ctk.CTkFrame):
                     for inner_child in child.winfo_children():
                         if isinstance(inner_child, ctk.CTkEntry):
                             group_info["group_name"] = inner_child.get()
                             self.group_order.append(group_info["group_name"])
+
+    def update_criteria_rows(self, index1, index2):
+        # Swap the criteria_rows for the two indices
+        group_ids = list(self.criteria_rows.keys())
+        if index1 < len(group_ids) and index2 < len(group_ids):
+            group_id1 = group_ids[index1]
+            group_id2 = group_ids[index2]
+            self.criteria_rows[group_id1], self.criteria_rows[group_id2] = self.criteria_rows[group_id2], self.criteria_rows[group_id1]

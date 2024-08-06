@@ -8,14 +8,10 @@ class CriteriaApplication:
         self.parent = parent
 
     def apply_criteria(self):
-        if not self.parent.selected_values_label:
-            messagebox.showerror("Error", "Please select molecules before applying filters.")
-            return
         if not hasattr(self.parent, 'group_frame') or not self.parent.group_frame:
             messagebox.showerror("Error", "No groups created yet. Please create groups first.")
             return
         
-        # Clean up criteria rows before applying criteria
         for group_id in self.parent.criteria_rows.keys():
             self.parent.criteria_rows[group_id] = [
                 row for row in self.parent.criteria_rows[group_id] if row is not None
@@ -29,6 +25,10 @@ class CriteriaApplication:
         selected_molecules = self.parent.selected_values_label.get("2.0", "end-1c").strip()
         selected_molecules = [m.strip() for m in selected_molecules.split("\n")  if m.strip()]
 
+        if not selected_molecules:
+            messagebox.showerror("Error", "Please select molecules before applying filters.")
+            return
+        
         for group_id, group_frame in enumerate(self.parent.group_frame):
             # Adjusting group IDs to match the existing keys in criteria_rows
             actual_group_ids = list(self.parent.criteria_rows.keys())
