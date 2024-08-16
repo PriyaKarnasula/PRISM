@@ -8,7 +8,12 @@ from CriteriaApply import CriteriaApplication
 from GraphPreview import PreviewGraph  
 from PrismExport import ExportPrism  
 from MultiselectDropdownMolecules import DropDownMulitSelectMolecules
+from MoveUpDown import MoveUpDown
+import logging
+import copy
 import os
+
+logger = logging.getLogger(__name__)
 
 class Groups(ctk.CTkFrame):
 
@@ -22,30 +27,29 @@ class Groups(ctk.CTkFrame):
         self.nav_frame.columnconfigure(2, weight=1)
         self.nav_frame.columnconfigure(3, weight=1)
         self.nav_frame.columnconfigure(4, weight=1)
-        self.nav_frame.columnconfigure(5, weight=1)
-        self.nav_frame.columnconfigure(6, weight=1)
 
         self.nav_frame.rowconfigure(0, weight=1)
-        self.nav_frame.rowconfigure(1, weight=1)
+        self.nav_frame.rowconfigure(1, weight=15)
         self.nav_frame.rowconfigure(2, weight=1)
         self.nav_frame.rowconfigure(3, weight=1)
 
         self.molecule_names = []
         self.df = None
-        self.criteria_rows = {}  # Dictionary to store CriteriaRow instances by group ID or name
+        self.criteria_rows = {}                      # Dictionary to store CriteriaRow instances by group ID or name
         self.criteria_application = CriteriaApplication(self)
         self.previewing_graph = PreviewGraph(self)   # Initialize PreviewGraph instance
-        self.export_to_prism = ExportPrism(self)   # Initialize PreviewGraph instance
+        self.export_to_prism = ExportPrism(self)     # Initialize ExportPrism instance
         self.selected_molecules = []
         self.unique_molecule_names = []
-        self.filtered_dfs = {}  # Initialize filtered_dfs here
-        self.current_num_groups = 0  # Initialize current_num_groups here
-        self.group_order = []  # Initialize group order list
+        self.filtered_dfs = {}                       # Initialize filtered_dfs 
+        self.current_num_groups = 0                  # Initialize current_num_groups to 0
 
         self.file_frame = ctk.CTkFrame(nav_frame)
         self.file_frame.grid(row=0,column=0, padx=50, pady=0)
         open_file_btn = ctk.CTkButton(self.file_frame, text="Open Data File", command=self.open_file)
         open_file_btn.grid(row=0,column=0)
+
+        logger.info("Groups class initialized")
 
         self.molecule_frame = ctk.CTkFrame(nav_frame)
         self.molecule_frame.grid(row=0,column=2, padx=10)
@@ -53,7 +57,7 @@ class Groups(ctk.CTkFrame):
         self.molecule_label.grid(row=0,column=0,padx =10)
         self.molecule_dropdown = ctk.CTkComboBox(self.molecule_frame,values=self.molecule_names)
         self.molecule_dropdown.grid(row=0,column=1,sticky="w")
-        self.molecule_dropdown.set('Select')  # Set default value
+        self.molecule_dropdown.set('Select')           # Set default value
 
         self.group_number_frame = ctk.CTkFrame(nav_frame)
         self.group_number_frame.grid(row =0, column = 3, sticky='w', padx=10)
@@ -75,10 +79,15 @@ class Groups(ctk.CTkFrame):
         self.selected_values_label = ctk.CTkTextbox(self.compounds_frame, width=200, height=50)
         self.selected_values_label.grid(row=1, column=1, padx=5, pady=5)
 
-        self.parent_group_frame = ctk.CTkScrollableFrame(self.nav_frame, height = 650, width = 1490)
-        self.parent_group_frame.grid(row=1, column=0, columnspan=6, sticky="nsew")
+        self.parent_group_frame = ctk.CTkScrollableFrame(self.nav_frame)
+        self.parent_group_frame.grid(row=1, column=0, columnspan=4, sticky="nsew")
         self.parent_group_frame.rowconfigure(0, weight =1)
         self.parent_group_frame.columnconfigure(0, weight =1)
+
+        self.aggregate_groups_frame = ctk.CTkFrame(nav_frame)
+        self.aggregate_groups_frame.grid(row=1, column=4, sticky="nsew", padx=5, pady=5)
+        self.aggregate_groups_frame.columnconfigure(0, weight =1)
+        self.aggregate_groups_frame.rowconfigure(0, weight =1)
 
         self.add_group_frame = ctk.CTkFrame(nav_frame)
         self.add_group_frame.grid(row=2, column=0, padx=5, pady=5)
@@ -95,20 +104,20 @@ class Groups(ctk.CTkFrame):
         self.graph_molecule_dropdown = ctk.CTkComboBox(self.preview_graph_frame, values = self.unique_molecule_names)
         self.graph_molecule_dropdown.set('Select Molecule')
         self.graph_molecule_dropdown.grid(row = 0, column =0, padx=5, pady=5)        
-        self.preview_graph_btn = ctk.CTkButton(self.preview_graph_frame, text="Preview Graph", command=self.previewing_graph.preview_graph) #change command later
+        self.preview_graph_btn = ctk.CTkButton(self.preview_graph_frame, text="Preview Graph", command=self.previewing_graph.preview_graph) 
         self.preview_graph_btn.grid(row=0, column=1, padx=5, pady=5)
 
         self.prism_export_frame = ctk.CTkFrame(nav_frame)
         self.prism_export_frame.grid(row=3, column=3, padx=0, pady=5)
-        self.prism_export_dropdown = ctk.CTkComboBox(self.prism_export_frame, values = ['Columnar','Nested']) #change command later
+        self.prism_export_dropdown = ctk.CTkComboBox(self.prism_export_frame, values = ['Columnar','Nested']) 
         self.prism_export_dropdown.grid(row=0, column=0, padx=5, pady=5)
         self.prism_export_dropdown.set('Select')
-        self.prism_export_btn = ctk.CTkButton(self.prism_export_frame, text="Export to PRISM", command=self.export_to_prism.prism_export) #change command later
+        self.prism_export_btn = ctk.CTkButton(self.prism_export_frame, text="Export to PRISM", command=self.export_to_prism.prism_export) 
         self.prism_export_btn.grid(row=0, column=1, padx=5, pady=5)
 
         self.excel_export_frame = ctk.CTkFrame(nav_frame)
         self.excel_export_frame.grid(row=3, column=4, padx=0, pady=5)
-        self.excel_export_btn = ctk.CTkButton(self.excel_export_frame, text="Export to Excel", command=self.export_to_excel) #change command later
+        self.excel_export_btn = ctk.CTkButton(self.excel_export_frame, text="Export to Excel", command=self.export_to_excel) 
         self.excel_export_btn.grid(row=0, column=0, padx=5, pady=5)
 
     def open_file(self):
@@ -133,6 +142,7 @@ class Groups(ctk.CTkFrame):
             self.df = pd.read_csv(filepath, index_col=False, low_memory=False)
             self.molecule_names = self.df.columns[1:].tolist()
             self.is_roi = False
+            logger.info("Data file loaded successfully")
             self.update_molecule_dropdown()
         except Exception as e:
             print(f"Failed to load file: {e}")
@@ -145,6 +155,7 @@ class Groups(ctk.CTkFrame):
     
     def update_molecule_dropdown(self):
         self.molecule_dropdown.configure(values=self.molecule_names)
+        logger.info("Molecule dropdown updated")
 
     def open_compounds_dropdown(self):
         selected_molecule = self.molecule_dropdown.get()
@@ -165,9 +176,9 @@ class Groups(ctk.CTkFrame):
     def update_graph_molecule_dropdown(self, unique_molecule_names):
         self.unique_molecule_names = unique_molecule_names
         self.graph_molecule_dropdown.configure(values=self.unique_molecule_names)
+        logger.info("Graph molecules dropdown updated")
 
     def create_groups(self, event=None):
-
         # Validate if the data file is loaded
         if self.df is None:
             messagebox.showerror("Error", "Please open a data file first.")
@@ -184,13 +195,14 @@ class Groups(ctk.CTkFrame):
         self.criteria_rows.clear() 
 
         selected_value = self.group_number_dropdown.get()
-        if selected_value.isdigit():  # Check if it's a valid number
+        if selected_value.isdigit():                      # Check if it's a valid number
             num_groups = int(selected_value)
 
             self.group_frame = []
-            self.total_groups_created = 0  # Reset total groups created
+            self.total_groups_created = 0                 # Reset total groups created
+
             for i in range(num_groups):
-                group_container_frame = ctk.CTkFrame(self.parent_group_frame, border_width=2, corner_radius=10)
+                group_container_frame = ctk.CTkFrame(self.parent_group_frame,  border_width=2, corner_radius=10)
                 group_container_frame.grid(row=i, column =0, padx=10, pady=5)
                 group_container_frame.grid_columnconfigure(0, weight =1)
                 group_container_frame.grid_rowconfigure(0, weight =1)
@@ -200,8 +212,9 @@ class Groups(ctk.CTkFrame):
                 group_container_frame.rowconfigure(1, weight =1)
                 self.group_frame.append(group_container_frame)
                 self.create_group(i + 1, group_container_frame)
-                self.total_groups_created += 1 
+                self.total_groups_created += 1            # Increment the total groups created
         else:
+            # Handles the case where 'Select' or an invalid string is selected
             pass
 
     def create_group(self, group_number, container_frame):
@@ -213,19 +226,16 @@ class Groups(ctk.CTkFrame):
         individual_group_number_label.grid(row = 0, column = 0, padx = 10, pady = 5, sticky = 'w')
         individual_group_name_entry = ctk.CTkEntry(individual_group_number_frame)
         individual_group_name_entry.grid(row=0, column=1, padx = 20, pady = 5)
-
-        move_up_btn = ctk.CTkButton(individual_group_number_frame, text="Move Up", fg_color='transparent', border_width=1, command=lambda gname = individual_group_name_entry: self.move_group_up(gname))
-        move_up_btn.grid(row=0, column=2, padx=5, pady=5)
-        move_down_btn = ctk.CTkButton(individual_group_number_frame, text="Move Down", fg_color='transparent', border_width=1, command=lambda gname = individual_group_name_entry: self.move_group_down(gname))
-        move_down_btn.grid(row=0, column=3, padx=5, pady=5)
-        delete_group_btn = ctk.CTkButton(individual_group_number_frame, text="Delete Group", fg_color='transparent', border_width=1, command=lambda gf=container_frame, gn=group_number, gname = individual_group_name_entry: self.delete_group(gf, gn, gname))
-        delete_group_btn.grid(row=0, column=4, padx=5, pady=5)
+        delete_group_btn = ctk.CTkButton(individual_group_number_frame, text="Delete Group", fg_color='transparent', border_width = 1, command=lambda gf=container_frame, gn=group_number : self.delete_group(gf, gn))
+        delete_group_btn.grid(row=0, column=2, padx=5, pady=5)
 
         self.criteria_frame = ctk.CTkFrame(container_frame)
         self.criteria_frame.grid(row=1, column=0, padx=10, pady=5)
         self.add_criteria(group_number, self.criteria_frame,individual_group_name_entry)
         add_criteria_btn = ctk.CTkButton(container_frame, text="Add Criteria",fg_color='transparent', border_width = 1, command=lambda cf=self.criteria_frame: self.add_criteria(group_number, cf,individual_group_name_entry))
         add_criteria_btn.grid(row=2, column=0, padx=10, pady=5, sticky = 'w')
+
+        logger.info(f"Group {group_number} created")
 
     def add_group(self):
         if not hasattr(self, 'group_frame') or not self.group_frame:
@@ -246,12 +256,15 @@ class Groups(ctk.CTkFrame):
             widget = self.previewing_graph.canvas.get_tk_widget()
             if widget.winfo_exists():
                 widget.destroy()
-            self.previewing_graph.canvas = None  # Clear the reference
+            self.previewing_graph.canvas = None           # Clear the reference
 
-        self.total_groups_created += 1  # Update total groups created
+        for child in self.aggregate_groups_frame.winfo_children():
+            child.destroy()
+
+        self.total_groups_created += 1                    # Update total groups created
         group_container_frame = ctk.CTkFrame(self.parent_group_frame, border_width=2, corner_radius=10)
         self.create_group(new_group_number, group_container_frame)
-        group_container_frame.grid(row = self.total_groups_created, column =0, padx = 10, pady = 5)
+        group_container_frame.grid(row =self.total_groups_created, column =0, padx = 10, pady = 5)
         group_container_frame.grid_columnconfigure(0, weight =1)
         group_container_frame.grid_rowconfigure(0, weight =1)
         group_container_frame.columnconfigure(0, weight =1)
@@ -259,44 +272,39 @@ class Groups(ctk.CTkFrame):
         group_container_frame.columnconfigure(1, weight =1)
         group_container_frame.rowconfigure(1, weight =1)
         self.group_frame.append(group_container_frame)
-        self.update_group_dropdown()  # Update the dropdown when a new group is created
+        self.update_group_dropdown()                      # Update the dropdown when a new group is created
 
-    def delete_group(self, group_frame, group_number, group_name):
+    def delete_group(self, group_frame, group_number):
         # Handling the existing graph
         if hasattr(self.previewing_graph, 'canvas') and self.previewing_graph.canvas:
             widget = self.previewing_graph.canvas.get_tk_widget()
             if widget.winfo_exists():
                 widget.destroy()
-            self.previewing_graph.canvas = None  # Clear the reference
+            self.previewing_graph.canvas = None            # Clear the reference
+
+        for child in self.aggregate_groups_frame.winfo_children():
+            child.destroy()
 
         group_frame.destroy()
         self.group_frame.remove(group_frame)
-
-        # Remove criteria for the deleted group
-        # group_id_to_remove = None
-        # print(group_frame)
-        # for group_id, data in self.criteria_rows.items():
-        #     print(group_id, data)
-        #     if data["frame"] == group_frame:
-        #         group_id_to_remove = group_id
-        #         break
-
-        # if group_id_to_remove is not None:
-        #     del self.criteria_rows[group_id_to_remove]
-
         # Remove criteria for the deleted group
         if group_number in self.criteria_rows:
             del self.criteria_rows[group_number]
 
-        # Refresh group positions
-        self.refresh_group_positions()
+        # Re-arrange the remaining groups
+        for i, frame in enumerate(self.group_frame):
+            frame.grid(row=i, column=0, padx=10, pady=5)
 
-        self.total_groups_created -= 1
+        self.total_groups_created -=1
         self.update_group_dropdown()
+
+        logger.info(f"Group {group_number} deleted")
 
     def update_group_dropdown(self):
         self.current_num_groups = self.total_groups_created 
-        self.group_number_dropdown.set(str(self.current_num_groups))        
+        self.group_number_dropdown.set(str(self.current_num_groups))    
+        
+        logger.info("Number of Groups dropdown updated based on groups added/deleted")    
 
     def add_criteria(self, group_number, criteria_frame, individual_group_name_entry):
         # Handling the existing graph
@@ -304,12 +312,17 @@ class Groups(ctk.CTkFrame):
             widget = self.previewing_graph.canvas.get_tk_widget()
             if widget.winfo_exists():
                 widget.destroy()
-            self.previewing_graph.canvas = None  # Clear the reference
+            self.previewing_graph.canvas = None  
+        
+        for child in self.aggregate_groups_frame.winfo_children():
+            child.destroy()
+
         criteria_row_instance = CriteriaRow(self, criteria_frame, self.molecule_names, self.df,individual_group_name_entry,  parent_class=self) 
         if group_number not in self.criteria_rows:
             self.criteria_rows[group_number] = []
         self.criteria_rows[group_number].append(criteria_row_instance)
         # print(criteria_row_instance)
+        logger.info(f"Criteria added for group {group_number}")
 
     def export_to_excel(self):
         if not hasattr(self, 'filtered_dfs') or not self.filtered_dfs:
@@ -324,86 +337,27 @@ class Groups(ctk.CTkFrame):
                                                 filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
                                                 initialfile="Filtered_Data.xlsx")
         if not file_path:
-            return # User cancelled the save operation  
+            return                                # If user cancels, do nothing
+        
+        # Deep copy the criteria_df
+        criteria_copy = copy.deepcopy(self.criteria_df)
+        # Replace '=' with 'equals' in the criteria_copy(else, excel is writing = as 0)
+        criteria_copy.replace("=", "equals", inplace=True)
 
         with pd.ExcelWriter(file_path, engine='xlsxwriter') as writer:
             # Write criteria_df to the first sheet
-            self.criteria_df.to_excel(writer, sheet_name="Criteria", index=False)
+            criteria_copy.to_excel(writer, sheet_name="Criteria", index=False)
             
             # Write each filtered DataFrame to subsequent sheets
             for group_name, df in self.filtered_dfs:
                 df.to_excel(writer, sheet_name=group_name, index=False)
 
-        print(f"Excel file saved to {file_path}")
+        # print(f"Excel file saved to {file_path}")
+        logger.info(f"Excel file saved to {file_path}")
 
     def get_criteria(self):
-        # Call the getter method to get the selected value from the combo box
+        # Call the method to get the selected value from the combo box
         selected_criteria = self.criteria_row_instance.get_selected_criteria()
-        print(f"Selected criteria: {selected_criteria}")    
+        # print(f"Selected criteria: {selected_criteria}")    
 
-    def move_group_up(self, group_name_entry):
-        # Handling the existing graph
-        if hasattr(self.previewing_graph, 'canvas') and self.previewing_graph.canvas:
-            widget = self.previewing_graph.canvas.get_tk_widget()
-            if widget.winfo_exists():
-                widget.destroy()
-            self.previewing_graph.canvas = None  # Clear the reference
-
-        selected_group_name = group_name_entry.get()
-        self.get_group_names()
-        print(selected_group_name)
-        index = self.group_order.index(selected_group_name)
-        if index > 0:
-            print(self.group_order)
-            self.group_order[index], self.group_order[index - 1] = self.group_order[index - 1], self.group_order[index]
-            self.group_frame[index], self.group_frame[index - 1] = self.group_frame[index - 1], self.group_frame[index]
-            print(self.group_order)
-            # Update criteria_rows to reflect new order
-            self.update_criteria_rows(index, index - 1)
-            self.refresh_group_positions()
-
-    def move_group_down(self, group_name_entry):
-        # Handling the existing graph
-        if hasattr(self.previewing_graph, 'canvas') and self.previewing_graph.canvas:
-            widget = self.previewing_graph.canvas.get_tk_widget()
-            if widget.winfo_exists():
-                widget.destroy()
-            self.previewing_graph.canvas = None  # Clear the reference
-
-        selected_group_name = group_name_entry.get()
-        self.get_group_names() 
-        print(selected_group_name)
-        index = self.group_order.index(selected_group_name)
-        if index < len(self.group_order) - 1:
-            print(self.group_order)
-            self.group_order[index], self.group_order[index + 1] = self.group_order[index + 1], self.group_order[index]
-            self.group_frame[index], self.group_frame[index + 1] = self.group_frame[index + 1], self.group_frame[index]
-            print(self.group_order) 
-            # Update criteria_rows to reflect new order
-            self.update_criteria_rows(index, index + 1)
-            self.refresh_group_positions()
-
-    def refresh_group_positions(self):
-        for i, group_frame in enumerate(self.group_frame):
-            group_frame.grid(row=i, column=0, padx=10, pady=5)
-
-    def get_group_names(self):
-        if hasattr(self, 'group_order') or self.group_order:
-            self.group_order = []
-        for group_id, group_frame in enumerate(self.group_frame):
-            group_info = {"group_name": None}
-            # Find group names within the group frame
-            for child in group_frame.winfo_children():
-                if isinstance(child, ctk.CTkFrame):
-                    for inner_child in child.winfo_children():
-                        if isinstance(inner_child, ctk.CTkEntry):
-                            group_info["group_name"] = inner_child.get()
-                            self.group_order.append(group_info["group_name"])
-
-    def update_criteria_rows(self, index1, index2):
-        # Swap the criteria_rows for the two indices
-        group_ids = list(self.criteria_rows.keys())
-        if index1 < len(group_ids) and index2 < len(group_ids):
-            group_id1 = group_ids[index1]
-            group_id2 = group_ids[index2]
-            self.criteria_rows[group_id1], self.criteria_rows[group_id2] = self.criteria_rows[group_id2], self.criteria_rows[group_id1]
+    

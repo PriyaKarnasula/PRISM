@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
 from lxml import etree as ET
+import logging
 
+logger = logging.getLogger(__name__)
 
 class NestedTable():
 
@@ -122,6 +124,7 @@ class NestedTable():
         # writing the dataframe to prism file
         prism_tree.write(output_file, pretty_print=True, xml_declaration=True, encoding="utf-8")
         
+        logger.info("Nested Prism xml export data is ready")
         
 if __name__ == '__main__':
         
@@ -137,9 +140,9 @@ if __name__ == '__main__':
         pig_untreated_df = pd.DataFrame(arr, columns=[f'Herd {i}' for i in range(3)])
         pig_control_df = pd.DataFrame(arr, columns=[f'Herd {i}' for i in range(3)])
         
-        print(pig_control_df)
+        # print(pig_control_df)
         dict_df = {"Cow Treatment": {"Untreated": cow_untreated_df, "Treated": cow_treated_df , "Control": cow_control_df},
                    "pig Treatment": {"Untreated":pig_treated_df, "Treated": pig_untreated_df, "Control": pig_control_df}}
         nested_table = NestedTable(dict_df)
         nested_table.to_xml("data/prism_template.pzfx", "data/populated_nested.pzfx")
-        print("XML file created successfully.")
+        # print("XML file created successfully.")

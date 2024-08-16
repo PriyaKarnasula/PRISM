@@ -4,7 +4,11 @@ from tkinter import messagebox
 from tkinter import filedialog
 from CriteriaApply import CriteriaApplication  # Import the new class
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import logging
+
+logger = logging.getLogger(__name__)
 
 class PreviewGraph:
     def __init__(self, parent):
@@ -41,7 +45,7 @@ class PreviewGraph:
 
         # Prepare data for plotting
         plot_data = pd.DataFrame(mean_values)
-        print(plot_data)
+        # print(plot_data)
         
         # Handling the existing graph
         if hasattr(self, 'canvas') and self.canvas:
@@ -66,3 +70,5 @@ class PreviewGraph:
         self.canvas = FigureCanvasTkAgg(fig, master=self.parent.parent_group_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row=self.parent.total_groups_created + 1, column=0, padx=10, pady=10)
+
+        logger.info("Graph is displayed on the Application")

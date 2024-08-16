@@ -1,4 +1,5 @@
 import re
+import sys
 import numpy as np
 import pandas as pd
 import customtkinter as ctk
@@ -8,6 +9,9 @@ import os
 from PrismNestedTable import NestedTable  # Import your NestedTable class here
 from PrismColumnTable import ColumnTable  # Import your ColumnTable class here
 import copy
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ExportPrism:
     def __init__(self, parent):
@@ -22,10 +26,9 @@ class ExportPrism:
             messagebox.showerror("Error", "No data to export. Please apply filters first.")
             return
         
-        print(self.parent.filtered_dfs)
-
+        # print(self.parent.filtered_dfs)
         self.prism_export_df = copy.deepcopy(self.parent.filtered_dfs)
-        
+
         prism_type = self.parent.prism_export_dropdown.get()
 
         if prism_type == 'Nested':
@@ -34,7 +37,12 @@ class ExportPrism:
             self.export_columnar_table()
         
     def export_nested_table(self):
-        input_prism_template = "templates/nested_template.pzfx"
+        if hasattr(sys, '_MEIPASS'):
+            template_folder = os.path.join(sys._MEIPASS, "templates")
+        else:
+            template_folder = "templates"
+
+        input_prism_template = os.path.join(template_folder, "nested_template.pzfx")
         nested_dict = {}
         for group_name, df in self.prism_export_df:
             molecule_names = self.extract_molecule_names(df)
@@ -44,7 +52,7 @@ class ExportPrism:
                 group_label = group_name
                 nested_dict[molecule][group_label] = df.filter(regex=f"^{molecule}_m")
 
-        print(nested_dict)
+        # print(nested_dict)
 
         # Specify the output file
         self.output_file = filedialog.asksaveasfilename(defaultextension=".pzfx", filetypes=[("Prism XML files", "*.pzfx")])
@@ -54,18 +62,24 @@ class ExportPrism:
 
         nested_table = NestedTable(nested_dict)
         nested_table.to_xml(input_prism_template, self.output_file)
+        logger.info("Nested Prism export completed")
         return
 
     def export_columnar_table(self):
         # Automatically pick the correct template based on the number of groups
         num_groups = len(self.prism_export_df)
-        print(f"Number of groups: {num_groups}")
-        template_folder = "templates"
+        # print(f"Number of groups: {num_groups}")
+        
+        if hasattr(sys, '_MEIPASS'):
+            template_folder = os.path.join(sys._MEIPASS, "templates")
+        else:
+            template_folder = "templates"
+
         input_prism_template = os.path.join(template_folder, f"group{num_groups}.pzfx")
 
         molecule_dfs = {}
         all_group_dfs = {group_name: df for group_name, df in self.prism_export_df}
-        print(f"Reformatting data for Prism: {all_group_dfs}")
+        # print(f"Reformatting data for Prism: {all_group_dfs}")
 
         molecule_dfs = self.prepare_dict_for_columnar_export(all_group_dfs)
 
@@ -77,6 +91,7 @@ class ExportPrism:
 
         column_table = ColumnTable(molecule_dfs)
         column_table.to_xml(input_prism_template, self.output_file)
+        logger.info("Columnar Prism export completed")
         return
 
     def extract_molecule_names(self,df):
@@ -111,7 +126,7 @@ class ExportPrism:
             lst_df.append(group_df)
         combined_df = pd.concat(lst_df, axis=1)
 
-        # case pyruvicacid_something_m0####Group1 -> pyruvicacid_something_m0 ->  [pyruvicacid, soemthing, m0] -> [pyruvicacid, soemthing] -> pyruvicacid_soemthing
+        # case pyruvicacid_soemthing_m0####Group1 -> pyruvicacid_soemthing_m0 ->  [pyruvicacid, soemthing, m0] -> [pyruvicacid, soemthing] -> pyruvicacid_soemthing
         # unique_tables are the molecule names
         unique_tables = list(set(['_'.join(col.split("####")[0].split('_')[:-1]) for col in combined_df.columns]))
 
@@ -141,5 +156,7 @@ class ExportPrism:
             
             table_df = table_df.dropna(axis = 1, how = 'all')
             prism_dict[table_name] = table_df
+
+        logger.info("Dictonary is prepared for columnar prism export")
 
         return prism_dict

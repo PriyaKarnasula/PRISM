@@ -1,9 +1,9 @@
 import logging
 import customtkinter as ctk
 from tkinter import *
+import logging
 
 logger = logging.getLogger(__name__)
-
 
 class DropDownMulitSelect(ctk.CTkToplevel):
     def __init__(self, master, options, selected_values_label):
@@ -88,6 +88,8 @@ class DropDownMulitSelect(ctk.CTkToplevel):
         text = "Selected Values\n" + "\n".join(self.selected_values)
         self.selected_values_label.insert("0.0", text)
 
+        logger.info("Selected Values: %s", self.selected_values)
+
         self.destroy()
 
     def clear(self):
@@ -95,6 +97,8 @@ class DropDownMulitSelect(ctk.CTkToplevel):
         self.selected_values = []
         self.drop_down.destroy()
         self.create_drop_down()
+
+        logger.info("Selected Values are cleared.")
 
 
 if __name__ == "__main__":

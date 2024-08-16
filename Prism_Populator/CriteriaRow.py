@@ -3,6 +3,9 @@ import pandas as pd
 from MultiselectDropdown import DropDownMulitSelect
 from tkinter import messagebox
 from GraphPreview import PreviewGraph  # Import the new class
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CriteriaRow(ctk.CTkFrame):
     def __init__(self, master, parent_frame, molecule_names, df,group_name_entry, parent_class):
@@ -70,6 +73,11 @@ class CriteriaRow(ctk.CTkFrame):
                 widget.destroy()
             self.master.previewing_graph.canvas = None  # Clear the reference
 
+        for child in self.master.aggregate_groups_frame.winfo_children():
+            child.destroy()
+
+        logger.info("Criteria Row deleted")
+
     def update_criteria_dropdown(self, choice):
         if not self.group_name_entry.get():
             messagebox.showerror("Error", "Please populate the group name before selecting a grouping column.")
@@ -89,6 +97,8 @@ class CriteriaRow(ctk.CTkFrame):
 
         self.criteria_select.configure(values=criteria_options)
     
+        logger.info("Criteria dropdown is updated to (equals, not equals / (<, >, = and not =) based on the grouping column selected")
+
     def update_value_input_type(self, criteria):
         if self.value_select:
             self.value_select.destroy()
@@ -107,6 +117,8 @@ class CriteriaRow(ctk.CTkFrame):
             self.value_select.grid(row=self.row_idx, column=5, padx=5, pady=5)
             self.value_select.set('Select')
             self.selected_values_label = None
+
+        logger.info("Value dropdown is updated to multiselect or singleselect based on the grouping criteria")
 
     def open_multiselect_dropdown(self):
         options_selected = list(self.df[self.column_select.get()].unique())
@@ -138,7 +150,7 @@ class CriteriaRow(ctk.CTkFrame):
                 "value": value if value else []
             }
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred while retrieving selected criteria: {e}")
+            # messagebox.showerror("Error", f"An error occurred while retrieving selected criteria: {e}")
             return {
             "criteria": "None",
             "column": "None",
@@ -150,3 +162,4 @@ class CriteriaRow(ctk.CTkFrame):
         if self.data_rows_label and self.data_rows_label.winfo_exists():
             self.data_rows_label.configure(text=str(num_rows))
         # self.data_rows_label.configure(text=str(num_rows))
+        logger.info("Data Rows label updated")

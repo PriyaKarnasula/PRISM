@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 from lxml import etree as ET
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ColumnTable():
 
@@ -86,6 +89,8 @@ class ColumnTable():
         
         # writing the dataframe to prism file
         prism_tree.write(output_file, pretty_print=True, xml_declaration=True, encoding="utf-8")
+
+        logger.info("Columnar Prism xml export data is ready")
 
 if __name__ == '__main__':
 

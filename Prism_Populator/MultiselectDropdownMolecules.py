@@ -1,9 +1,9 @@
 import logging
 import customtkinter as ctk
 from tkinter import *
+import logging
 
 logger = logging.getLogger(__name__)
-
 
 class DropDownMulitSelectMolecules(ctk.CTkToplevel):
     def __init__(self, parent, master, options, selected_values_label):
@@ -91,6 +91,8 @@ class DropDownMulitSelectMolecules(ctk.CTkToplevel):
         self.selected_values_label.insert("0.0", text)
         self.update_unique_molecule_names()
 
+        logger.info(f"Selected molecules: {self.selected_values}")
+
         self.destroy()
 
     def clear(self):
@@ -107,7 +109,7 @@ class DropDownMulitSelectMolecules(ctk.CTkToplevel):
             base_name = molecule.split('_')[0]
             unique_names.add(base_name)
         self.unique_molecule_names = list(unique_names)
-        print(f"Unique molecule names: {self.unique_molecule_names}")
+        # print(f"Unique molecule names: {self.unique_molecule_names}")
         self.parent.update_graph_molecule_dropdown(self.unique_molecule_names)
 
 if __name__ == "__main__":

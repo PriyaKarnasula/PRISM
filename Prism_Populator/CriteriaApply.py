@@ -2,16 +2,35 @@ import pandas as pd
 import customtkinter as ctk
 from tkinter import messagebox
 from tkinter import filedialog
+from MoveUpDown import MoveUpDown
+from CTkTable import *
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CriteriaApplication:
     def __init__(self, parent):
         self.parent = parent
 
     def apply_criteria(self):
+        if not self.parent.selected_values_label:
+            messagebox.showerror("Error", "Please select molecules before applying filters.")
+            return
         if not hasattr(self.parent, 'group_frame') or not self.parent.group_frame:
             messagebox.showerror("Error", "No groups created yet. Please create groups first.")
             return
         
+        # Check if all groups have a name
+        for group_frame in self.parent.group_frame:
+            for child in group_frame.winfo_children():
+                if isinstance(child, ctk.CTkFrame):
+                    for inner_child in child.winfo_children():
+                        if isinstance(inner_child, ctk.CTkEntry):
+                            if not inner_child.get().strip():
+                                messagebox.showerror("Error", "Please enter all the group names before applying filters.")
+                                return
+
+        # Clean up criteria rows before applying criteria
         for group_id in self.parent.criteria_rows.keys():
             self.parent.criteria_rows[group_id] = [
                 row for row in self.parent.criteria_rows[group_id] if row is not None
@@ -20,10 +39,13 @@ class CriteriaApplication:
         group_data = []
         self.parent.filtered_dfs = []
         criteria_data = []  # List to hold criteria information for the final DataFrame
+        group_names_list = []  # List to store group names for MoveUpDown
 
         # Get the selected molecules
         selected_molecules = self.parent.selected_values_label.get("2.0", "end-1c").strip()
         selected_molecules = [m.strip() for m in selected_molecules.split("\n")  if m.strip()]
+
+        logger.info("Selected molecules for applying criteria: %s", selected_molecules)
 
         if not selected_molecules:
             messagebox.showerror("Error", "Please select molecules before applying filters.")
@@ -46,6 +68,7 @@ class CriteriaApplication:
                     for inner_child in child.winfo_children():
                         if isinstance(inner_child, ctk.CTkEntry):
                             group_info["group_name"] = inner_child.get()
+                            logger.info("Group Name: %s", group_info["group_name"])
 
             # Get criteria for the current group and apply them
             if actual_group_id in self.parent.criteria_rows:
@@ -85,10 +108,18 @@ class CriteriaApplication:
                             filtered_df = filtered_df[filtered_df[column] < float(value)]
                     elif crit_type == "=":
                         if column in filtered_df.columns:
-                            filtered_df = filtered_df[filtered_df[column] == float(value)]
+                            if value == "nan":
+                                filtered_df = filtered_df[filtered_df[column].isna()]
+                            else:
+                                filtered_df = filtered_df[filtered_df[column] == float(value)]
+                            # filtered_df = filtered_df[filtered_df[column] == float(value)]
                     elif crit_type == "not =":
                         if column in filtered_df.columns:
-                            filtered_df = filtered_df[filtered_df[column] != float(value)]
+                            if value == "nan":
+                                filtered_df = filtered_df[~filtered_df[column].isna()]
+                            else:
+                                filtered_df = filtered_df[filtered_df[column] != float(value)]
+                            # filtered_df = filtered_df[filtered_df[column] != float(value)]
 
                     # Get the number of rows after applying the filter
                     num_rows = filtered_df.shape[0]
@@ -114,19 +145,37 @@ class CriteriaApplication:
 
             if group_info["group_name"]:
                 self.parent.filtered_dfs.append((group_info["group_name"], filtered_df))
+                group_names_list.append(group_info["group_name"])  # Add group name to the list
 
-        print("Filtered DataFrames created successfully.")
+        logger.info("Filtered DataFrames created successfully")
+        # print("Filtered DataFrames created successfully.")
         # print(self.parent.filtered_dfs)
+
         # Create and print the final DataFrame with criteria information
         self.parent.criteria_df = pd.DataFrame(criteria_data)
-        print("Criteria DataFrame:\n", self.parent.criteria_df)
+        # print("Criteria DataFrame:\n", self.parent.criteria_df)
+        logger.info("Criteria DataFrame created successfully")
 
         # Frame for displaying group names
-        self.group_names_frame = ctk.CTkFrame(self.parent.parent_group_frame)
-        # self.group_names_frame.grid(row=self.parent.total_groups_created + 1, column=1, sticky="nsew", padx=(10, 10), pady=(10, 10))
-        self.group_names_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 10), pady=(10, 10))
-        ctk.CTkLabel(self.group_names_frame, text="Group Name").grid(row=0, column=0, padx=10, pady=10)
-        ctk.CTkLabel(self.group_names_frame, text="Number of Rows").grid(row=0, column=1, padx=10, pady=10)
+        self.group_names_frame = ctk.CTkScrollableFrame(self.parent.aggregate_groups_frame)
+        self.group_names_frame.grid(row=0, column=0, padx=10, sticky="ew") 
+
+        # Prepare the data for the CTkTable
+        group_names = ["Group Name", "Number of Rows"]  # Column headers
+        table_data = [group_names]  
+
         for idx, group_info in enumerate(group_data):
-            ctk.CTkLabel(self.group_names_frame, text=group_info["group_name"]).grid(row=idx+1, column=0, padx=1, pady=1)
-            ctk.CTkLabel(self.group_names_frame, text=str(self.parent.filtered_dfs[idx][1].shape[0])).grid(row=idx+1, column=1, padx=1, pady=1)        
+            group_name = group_info["group_name"]
+            number_of_rows = self.parent.filtered_dfs[idx][1].shape[0]
+            table_data.append([group_name, number_of_rows])
+
+        # Create the CTkTable with the prepared data
+        table = CTkTable(master=self.group_names_frame, row=len(table_data), column=len(group_names), values=table_data, wraplength=100, hover_color = '#0096FF')
+        table.grid(row=0, column=0, padx=5, pady=5)
+
+        # Scrollable Frame for moving groups up and down       
+        self.parent.up_down_frame = ctk.CTkFrame(self.parent.aggregate_groups_frame)
+        self.parent.up_down_frame.grid(row=1, column=0, padx=10, pady=10)
+        # print(group_names_list)
+        updown_object = MoveUpDown(self.parent, self.parent.up_down_frame, group_names_list)
+        updown_object.grid(row=0, column=0, sticky = 'ew')
