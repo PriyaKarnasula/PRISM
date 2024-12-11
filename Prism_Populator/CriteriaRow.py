@@ -48,6 +48,9 @@ class CriteriaRow(ctk.CTkFrame):
         self.delete_criteria_btn = ctk.CTkButton(self.parent_frame, text="Delete Criteria", fg_color='transparent', border_width=1, command=self.delete_criteria)
         self.delete_criteria_btn.grid(row=self.row_idx, column=8, padx=5, pady=5)
 
+        # Disable all delete buttons except the last one
+        self.update_delete_button_status()
+
     def delete_criteria(self):
         self.column_label.destroy()
         self.column_select.destroy()
@@ -76,7 +79,28 @@ class CriteriaRow(ctk.CTkFrame):
         for child in self.master.aggregate_groups_frame.winfo_children():
             child.destroy()
 
+        # After deletion, update the status of the delete buttons
+        self.update_delete_button_status()
+
         logger.info("Criteria Row deleted")
+
+    def update_delete_button_status(self):
+        # Get the list of all delete buttons
+        delete_buttons = [child for child in self.parent_frame.winfo_children() if isinstance(child, ctk.CTkButton) and child.cget('text') == 'Delete Criteria']
+        
+        # Disable all delete buttons except the last one
+        if len(delete_buttons) > 1:
+            for i, button in enumerate(delete_buttons):
+                # Disable all except the last button
+                if i != len(delete_buttons) - 1:
+                    button.configure(state='disabled')
+                else:
+                    button.configure(state='normal')
+        else:
+            # If only one button remains, enable it
+            delete_buttons[0].configure(state='disabled')
+
+        logger.info("Delete buttons updated")
 
     def update_criteria_dropdown(self, choice):
         if not self.group_name_entry.get():

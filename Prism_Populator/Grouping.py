@@ -311,7 +311,8 @@ class Groups(ctk.CTkFrame):
         group_frame.destroy()
         self.group_frame.remove(group_frame)
 
-        self.delete_group_buttons.pop()  # Remove the last delete button
+        # Remove the last delete button from the list
+        self.delete_group_buttons.pop()  
         # Remove criteria for the deleted group
         if group_number in self.criteria_rows:
             del self.criteria_rows[group_number]
@@ -379,10 +380,5 @@ class Groups(ctk.CTkFrame):
                 df.to_excel(writer, sheet_name=group_name, index=False)
 
         logger.info(f"Excel file saved to {file_path}")
-
-    # def get_criteria(self):
-        # Call the method to get the selected value from the combo box
-        # selected_criteria = self.criteria_row_instance.get_selected_criteria()
-        # print(f"Selected criteria: {selected_criteria}")    
 
     
