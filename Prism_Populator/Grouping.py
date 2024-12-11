@@ -144,6 +144,10 @@ class Groups(ctk.CTkFrame):
             self.is_roi = False
             logger.info("Data file loaded successfully")
             self.update_molecule_dropdown()
+
+            # Extract the file name for display
+            self.file_name = os.path.basename(filepath)
+
         except Exception as e:
             print(f"Failed to load file: {e}")
         finally:
@@ -152,6 +156,11 @@ class Groups(ctk.CTkFrame):
     def remove_loading_label(self):
         if hasattr(self, 'loading_label') and self.loading_label is not None:
             self.loading_label.destroy()
+        if self.file_name:
+            # Display the first 10 characters of the file name followed by "..."
+            truncated_name = (self.file_name[:10] + '...') if len(self.file_name) > 10 else self.file_name
+            self.loading_label = ctk.CTkLabel(self.nav_frame, text=f"{truncated_name}")
+            self.loading_label.grid(row=0, column=1, padx=0, pady=0)
     
     def update_molecule_dropdown(self):
         self.molecule_dropdown.configure(values=self.molecule_names)
@@ -193,6 +202,7 @@ class Groups(ctk.CTkFrame):
         for child in self.parent_group_frame.winfo_children():
             child.destroy()
         self.criteria_rows.clear() 
+        self.delete_group_buttons = []  # Keep track of all delete group buttons
 
         selected_value = self.group_number_dropdown.get()
         if selected_value.isdigit():                      # Check if it's a valid number
@@ -213,6 +223,7 @@ class Groups(ctk.CTkFrame):
                 self.group_frame.append(group_container_frame)
                 self.create_group(i + 1, group_container_frame)
                 self.total_groups_created += 1            # Increment the total groups created
+            self.update_delete_buttons_state()  # Update delete buttons' state
         else:
             # Handles the case where 'Select' or an invalid string is selected
             pass
@@ -228,6 +239,7 @@ class Groups(ctk.CTkFrame):
         individual_group_name_entry.grid(row=0, column=1, padx = 20, pady = 5)
         delete_group_btn = ctk.CTkButton(individual_group_number_frame, text="Delete Group", fg_color='transparent', border_width = 1, command=lambda gf=container_frame, gn=group_number : self.delete_group(gf, gn))
         delete_group_btn.grid(row=0, column=2, padx=5, pady=5)
+        self.delete_group_buttons.append(delete_group_btn)  # Track this button for enabling/disabling later
 
         self.criteria_frame = ctk.CTkFrame(container_frame)
         self.criteria_frame.grid(row=1, column=0, padx=10, pady=5)
@@ -235,7 +247,18 @@ class Groups(ctk.CTkFrame):
         add_criteria_btn = ctk.CTkButton(container_frame, text="Add Criteria",fg_color='transparent', border_width = 1, command=lambda cf=self.criteria_frame: self.add_criteria(group_number, cf,individual_group_name_entry))
         add_criteria_btn.grid(row=2, column=0, padx=10, pady=5, sticky = 'w')
 
+        self.update_delete_buttons_state()
+
         logger.info(f"Group {group_number} created")
+    
+    def update_delete_buttons_state(self):
+        # Disable delete buttons for all groups except the last one
+        for i, frame in enumerate(self.group_frame):
+            delete_group_btn = frame.winfo_children()[0].winfo_children()[2]
+            if i == self.total_groups_created - 1:
+                delete_group_btn.configure(state='normal')
+            else:
+                delete_group_btn.configure(state='disabled')
 
     def add_group(self):
         if not hasattr(self, 'group_frame') or not self.group_frame:
@@ -287,6 +310,8 @@ class Groups(ctk.CTkFrame):
 
         group_frame.destroy()
         self.group_frame.remove(group_frame)
+
+        self.delete_group_buttons.pop()  # Remove the last delete button
         # Remove criteria for the deleted group
         if group_number in self.criteria_rows:
             del self.criteria_rows[group_number]
@@ -297,6 +322,7 @@ class Groups(ctk.CTkFrame):
 
         self.total_groups_created -=1
         self.update_group_dropdown()
+        self.update_delete_buttons_state()
 
         logger.info(f"Group {group_number} deleted")
 
@@ -352,12 +378,11 @@ class Groups(ctk.CTkFrame):
             for group_name, df in self.filtered_dfs:
                 df.to_excel(writer, sheet_name=group_name, index=False)
 
-        # print(f"Excel file saved to {file_path}")
         logger.info(f"Excel file saved to {file_path}")
 
-    def get_criteria(self):
+    # def get_criteria(self):
         # Call the method to get the selected value from the combo box
-        selected_criteria = self.criteria_row_instance.get_selected_criteria()
+        # selected_criteria = self.criteria_row_instance.get_selected_criteria()
         # print(f"Selected criteria: {selected_criteria}")    
 
     
