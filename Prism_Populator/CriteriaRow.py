@@ -87,7 +87,8 @@ class CriteriaRow(ctk.CTkFrame):
     def update_delete_button_status(self):
         # Get the list of all delete buttons
         delete_buttons = [child for child in self.parent_frame.winfo_children() if isinstance(child, ctk.CTkButton) and child.cget('text') == 'Delete Criteria']
-        
+        combo_boxes = [child for child in self.parent_frame.winfo_children() if isinstance(child, ctk.CTkComboBox)]
+
         # Disable all delete buttons except the last one
         if len(delete_buttons) > 1:
             for i, button in enumerate(delete_buttons):
@@ -100,7 +101,16 @@ class CriteriaRow(ctk.CTkFrame):
             # If only one button remains, enable it
             delete_buttons[0].configure(state='disabled')
 
-        logger.info("Delete buttons updated")
+        # Disable all combo boxes except the ones in the last row
+        if len(combo_boxes) > 2:  # More than two combo boxes
+            for i, box in enumerate(combo_boxes):
+                if i // 2 != (len(combo_boxes) // 2) - 1:  # If not the last row's combo boxes
+                    box.configure(state='disabled')
+                else:
+                    box.configure(state='normal')
+        elif combo_boxes:  # If only two combo boxes are left
+            combo_boxes[0].configure(state='normal')
+            combo_boxes[1].configure(state='normal')
 
     def update_criteria_dropdown(self, choice):
         if not self.group_name_entry.get():
@@ -135,7 +145,17 @@ class CriteriaRow(ctk.CTkFrame):
             self.selected_values_label = ctk.CTkTextbox(self.parent_frame, width=200, height=50)
             self.selected_values_label.grid(row=self.row_idx + 1, column=5, padx=5, pady=5)
         else:
-            self.unique_values = list(self.df[selected_column].unique())
+            group_name = self.group_name_entry.get()
+            # Check if the group already exists else assign the input df
+            matching_tuple_group = None
+            if hasattr(self.master, 'filtered_dfs_next_filter') and self.master.filtered_dfs_next_filter:
+                matching_tuple_group = next((item for item in self.master.filtered_dfs_next_filter if item[0] == group_name), None)
+            df = matching_tuple_group[1] if matching_tuple_group else self.df
+            # Check if df is a tuple and get the DataFrame inside it
+            if isinstance(df, tuple):
+                df = df[1] 
+            
+            self.unique_values = list(df[selected_column].unique())
             self.unique_values = [str(item) for item in self.unique_values]
             self.value_select = ctk.CTkComboBox(self.parent_frame, values=self.unique_values)
             self.value_select.grid(row=self.row_idx, column=5, padx=5, pady=5)
@@ -145,7 +165,15 @@ class CriteriaRow(ctk.CTkFrame):
         logger.info("Value dropdown is updated to multiselect or singleselect based on the grouping criteria")
 
     def open_multiselect_dropdown(self):
-        options_selected = list(self.df[self.column_select.get()].unique())
+        group_name = self.group_name_entry.get()
+        matching_tuple_group = None
+        if hasattr(self.master, 'filtered_dfs_next_filter') and self.master.filtered_dfs_next_filter:
+            matching_tuple_group = next((item for item in self.master.filtered_dfs_next_filter if item[0] == group_name), None)
+        df = matching_tuple_group[1] if matching_tuple_group else self.df
+        if isinstance(df, tuple):
+            df = df[1] 
+
+        options_selected = list(df[self.column_select.get()].unique())
         options_selected = [str(item) for item in options_selected]
         DropDownMulitSelect(self.parent_frame, options_selected, self.selected_values_label)
 
@@ -187,3 +215,15 @@ class CriteriaRow(ctk.CTkFrame):
             self.data_rows_label.configure(text=str(num_rows))
         # self.data_rows_label.configure(text=str(num_rows))
         logger.info("Data Rows label updated")
+    
+    def disable(self):
+        self.column_select.configure(state='disabled')
+        self.criteria_select.configure(state='disabled')
+        self.value_select.configure(state='disabled')
+        self.delete_criteria_btn.configure(state='disabled')
+    
+    def enable(self):
+        self.column_select.configure(state='normal')
+        self.criteria_select.configure(state='normal')
+        self.value_select.configure(state='normal')
+        self.delete_criteria_btn.configure(state='normal')

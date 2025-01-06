@@ -38,6 +38,7 @@ class CriteriaApplication:
 
         group_data = []
         self.parent.filtered_dfs = []
+        self.parent.filtered_dfs_next_filter = []
         criteria_data = []  # List to hold criteria information for the final DataFrame
         group_names_list = []  # List to store group names for MoveUpDown
 
@@ -139,17 +140,19 @@ class CriteriaApplication:
             group_data.append(group_info)
 
             # Filter the DataFrame to include only the selected molecules
+            filtered_df_for_next_filter = filtered_df.copy()
             if selected_molecules:
                 valid_columns = [col for col in selected_molecules if col in self.parent.df.columns]
                 filtered_df = filtered_df[valid_columns]
 
             if group_info["group_name"]:
                 self.parent.filtered_dfs.append((group_info["group_name"], filtered_df))
+                self.parent.filtered_dfs_next_filter.append((group_info["group_name"], filtered_df_for_next_filter))
                 group_names_list.append(group_info["group_name"])  # Add group name to the list
 
         logger.info("Filtered DataFrames created successfully")
         # print("Filtered DataFrames created successfully.")
-        # print(self.parent.filtered_dfs)
+        # print(self.parent.filtered_dfs_next_filter)
 
         # Create and print the final DataFrame with criteria information
         self.parent.criteria_df = pd.DataFrame(criteria_data)
